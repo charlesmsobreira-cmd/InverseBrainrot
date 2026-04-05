@@ -14,7 +14,10 @@ export default function InboxPage() {
   useEffect(() => {
     const savedNote = localStorage.getItem('brain-os-inbox');
     if (savedNote) {
-      setNote(savedNote);
+      const timer = setTimeout(() => {
+        setNote(savedNote);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, []);
 

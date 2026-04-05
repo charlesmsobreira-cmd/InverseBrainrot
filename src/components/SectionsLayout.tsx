@@ -1,12 +1,32 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Coffee, CurrencyDollar, CalendarCheck, CheckCircle, ArrowRight, X, Sparkle, MusicNotes, BookmarkSimple, FilmStrip } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { BookOpen, Coffee, CurrencyDollar, CheckCircle, ArrowRight, X, Sparkle, MusicNotes, BookmarkSimple, FilmStrip } from '@phosphor-icons/react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
+// --- Interfaces ---
+interface Recommendation {
+  category: string;
+  title: string;
+  author: string;
+  briefing: string;
+}
+
+interface RecommendationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  recommendation: Recommendation | null;
+}
+
+interface Task {
+  id: number;
+  text: string;
+  done: boolean;
+}
+
 // --- Sub-componente: Modal de Recomendação (Inspiração) ---
-const RecommendationModal = ({ isOpen, onClose, recommendation }: any) => {
+const RecommendationModal = ({ isOpen, onClose, recommendation }: RecommendationModalProps) => {
   if (!isOpen || !recommendation) return null;
 
   const IconType = {
@@ -30,7 +50,6 @@ const RecommendationModal = ({ isOpen, onClose, recommendation }: any) => {
         exit={{ scale: 1.1, opacity: 0, y: -20 }}
         className="relative w-full max-w-lg bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-10 text-white overflow-hidden"
       >
-        {/* Glow effect */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-azure-500/10 blur-[100px] pointer-events-none" />
         
         <div className="flex justify-between items-start mb-8 relative z-10">
@@ -61,7 +80,7 @@ const RecommendationModal = ({ isOpen, onClose, recommendation }: any) => {
 
           <div className="space-y-4">
             <p className="text-sm md:text-base text-white/70 leading-relaxed font-mono italic">
-               "{recommendation.briefing}"
+               &quot;{recommendation.briefing}&quot;
             </p>
           </div>
 
@@ -80,7 +99,7 @@ const RecommendationModal = ({ isOpen, onClose, recommendation }: any) => {
 };
 
 // --- Dados de Recomendação ---
-const recommendations = [
+const recommendations: Recommendation[] = [
   { category: 'Música', title: 'Flashing Lights', author: 'Kanye West', briefing: 'Um clássico do hip-hop orquestral que capta a energia vibrante de uma cidade à noite. Produção impecável e atmosfera luxuosa.' },
   { category: 'Música', title: 'Let It Happen', author: 'Tame Impala', briefing: 'Uma jornada psicodélica de 7 minutos que flutua entre batidas eletrônicas e guitarras envolventes. Perfeito para foco profundo.' },
   { category: 'Música', title: 'Pink + White', author: 'Frank Ocean', briefing: 'Uma faixa serena e melódica produzida por Pharrell, evocando sentimentos de nostalgia e beleza pura sob o sol.' },
@@ -93,14 +112,14 @@ const recommendations = [
 ];
 
 // 1. Routine Section
-const initialTasks = [
+const initialTasks: Task[] = [
   { id: 1, text: 'Review Next.js Docs', done: false },
   { id: 2, text: 'Workout Session', done: true },
   { id: 3, text: 'Read "Atomic Habits"', done: false },
 ];
 
 function RoutineSection() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const toggleTask = (id: number) => {
     setTasks(prev => {
       const newTasks = prev.map(t => t.id === id ? { ...t, done: !t.done } : t);
@@ -189,7 +208,7 @@ function FinanceSection() {
 // 4. Consume Section
 function ConsumeSection() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [currentRec, setCurrentRec] = useState<any>(null);
+  const [currentRec, setCurrentRec] = useState<Recommendation | null>(null);
 
   const handleOpenModal = () => {
     // Daily seed logic: Same recommendation for the whole day
@@ -203,10 +222,10 @@ function ConsumeSection() {
   };
 
   const images = [
-    '/consumo/art1.png',
-    '/consumo/art2.png',
-    '/consumo/art3.png',
-    '/consumo/art4.png'
+    'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?q=80&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1578301978018-3005759f2ed8?q=80&w=600&auto=format&fit=crop'
   ];
 
   return (
@@ -227,9 +246,9 @@ function ConsumeSection() {
                   src={img} 
                   alt="Art masterpiece" 
                   className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-all duration-200" 
-                  onError={(e: any) => {
+                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                     const num = i + 1;
-                    e.target.src = `https://placehold.co/300x400/121212/white?text=Arte+${num}`;
+                    (e.target as HTMLImageElement).src = `https://placehold.co/300x400/121212/white?text=Arte+${num}`;
                   }}
                 />
               </motion.div>

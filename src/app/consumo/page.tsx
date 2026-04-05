@@ -3,10 +3,52 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X, Star, Heart, CheckCircle, WarningCircle, ListBullets } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
+// --- Interfaces de Tipagem ---
+interface LogItem {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  category: string;
+  rating?: number;
+  isLiked?: boolean;
+}
+
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+
+interface FavoriteListProps {
+  logs: LogItem[];
+  category: string;
+  textColor: string;
+}
+
+interface LogModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  category: string | null;
+  onNotify: (msg: string, type?: 'success' | 'error') => void;
+  onRefresh: () => void;
+}
+
+interface CategorySectionProps {
+  title: string;
+  subtitle: string;
+  bgColor: string;
+  textColor: string;
+  image: string;
+  logs: LogItem[];
+  reverse?: boolean;
+  onOpenModal: (cat: string) => void;
+}
 
 // --- Sub-componente: Notificação Customizada (Toast) ---
-const Toast = ({ message, type, onClose }: any) => (
+const Toast = ({ message, type, onClose }: ToastProps) => (
   <motion.div
     initial={{ opacity: 0, y: 50, scale: 0.9 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -26,7 +68,7 @@ const Toast = ({ message, type, onClose }: any) => (
 );
 
 // --- Sub-componente: Lista de Favoritos/Wishlist ---
-const FavoriteList = ({ logs, category, textColor }: any) => {
+const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
   // Map standard title to highlight category
   const mapCategory: Record<string, string> = {
     'Músicas': 'Música',
@@ -36,7 +78,7 @@ const FavoriteList = ({ logs, category, textColor }: any) => {
   const categoryKey = mapCategory[category as keyof typeof mapCategory] || '';
 
   const filtered = logs
-    .filter((log: any) => log.category === categoryKey)
+    .filter((log) => log.category === categoryKey)
     .slice(0, 5);
 
   if (filtered.length === 0) return null;
@@ -52,7 +94,7 @@ const FavoriteList = ({ logs, category, textColor }: any) => {
         <span className="text-[10px] font-black uppercase tracking-[0.2em]">{category === 'Filmes' ? 'Wishlist' : 'Favoritos'}</span>
       </div>
       <ul className="space-y-3">
-        {filtered.map((item: any, index: number) => (
+        {filtered.map((item, index) => (
           <motion.li 
             key={item.id}
             initial={{ opacity: 0, x: -5 }}
@@ -69,7 +111,7 @@ const FavoriteList = ({ logs, category, textColor }: any) => {
 };
 
 // --- Sub-componente: Modal de Registro ---
-const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: any) => {
+const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalProps) => {
   const [name, setName] = useState('');
   const [extra, setExtra] = useState('');
   const [review, setReview] = useState('');
@@ -84,7 +126,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: any) => {
   };
 
   const handleSave = () => {
-    if (!name || !imageUrl) {
+    if (!name || !imageUrl || !category) {
       onNotify('Nome e Arquivo são obrigatórios!', 'error');
       return;
     }
@@ -101,7 +143,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: any) => {
       ? `Em ${date}, leu ${name} de ${extra}.${reviewPart}`
       : `Em ${date}, assistiu ${name}.${reviewPart}`;
 
-    const newLog = {
+    const newLog: LogItem = {
       id: Date.now().toString(),
       title: name,
       description: descriptionText,
@@ -128,7 +170,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: any) => {
     setName(''); setExtra(''); setReview(''); setImageUrl(''); setRating(0); setIsLiked(false);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !category) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -182,7 +224,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: any) => {
              </div>
              {imageUrl && (
                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                 <img src={getPreviewUrl()} className="w-16 h-16 rounded-lg object-cover bg-black/40" onError={(e:any) => e.target.src = 'https://placehold.co/100x100/121212/white?text=Erro'} />
+                 <img src={getPreviewUrl()} alt="Preview" className="w-16 h-16 rounded-lg object-cover bg-black/40" onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/121212/white?text=Erro'; }} />
                  <p className="text-[10px] font-mono text-azure-400 truncate">{getPreviewUrl()}</p>
                </div>
              )}
@@ -199,7 +241,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: any) => {
 };
 
 // --- Sub-componente: Seção de Categoria ---
-const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, reverse = false, onOpenModal }: any) => (
+const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, reverse = false, onOpenModal }: CategorySectionProps) => (
   <section className={`min-h-screen w-full flex flex-col justify-center relative overflow-hidden ${bgColor} ${textColor} px-6 md:px-24 py-20`}>
     <div className={`max-w-[1400px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center ${reverse ? 'md:flex-row-reverse' : ''}`}>
       <div className="flex flex-col items-center text-center w-full">
@@ -230,16 +272,21 @@ const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, rev
 );
 
 export default function MuralPage() {
-  const [notification, setNotification] = useState<any>(null);
+  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   const [modalCategory, setModalCategory] = useState<string | null>(null);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<LogItem[]>([]);
 
   const loadLogs = useCallback(() => {
     const saved = localStorage.getItem('brain-os-highlights');
     if (saved) setLogs(JSON.parse(saved));
   }, []);
 
-  useEffect(() => { loadLogs(); }, [loadLogs]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadLogs();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadLogs]);
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });

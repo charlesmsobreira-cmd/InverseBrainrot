@@ -1,8 +1,8 @@
 'use client';
 
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { CaretLeft, CaretRight, Play, Pause, Trophy, Trash, X, Warning, Star, Heart } from '@phosphor-icons/react';
-import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CaretLeft, CaretRight, Trophy, X, Warning, Star, Heart } from '@phosphor-icons/react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface Highlight {
   id: string;
@@ -14,61 +14,49 @@ interface Highlight {
   isLiked?: boolean;
 }
 
-const defaultHighlights: Highlight[] = [
-  {
-    id: '1',
-    title: 'Atomic Habits',
-    description: 'Finalizado em 15 dias. Nota 10/10.',
-    imageUrl: 'https://picsum.photos/seed/book1/800/600',
-    category: 'Livro'
-  },
-  {
-    id: '2',
-    title: 'Next.js 15 Masterclass',
-    description: 'Certificado de conclusão em desenvolvimento Fullstack.',
-    imageUrl: 'https://picsum.photos/seed/course1/800/600',
-    category: 'Estudo'
-  },
-  {
-    id: '3',
-    title: 'Interstellar Rewatch',
-    description: 'Experiência imersiva. Uma obra-prima atemporal.',
-    imageUrl: 'https://picsum.photos/seed/movie1/800/600',
-    category: 'Filme'
-  }
-];
+interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+}
 
 // --- Sub-componente: Modal de Confirmação Customizado ---
-const ConfirmModal = ({ isOpen, onClose, onConfirm, itemName }: any) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title }: ConfirmModalProps) => {
   if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose}
-        className="absolute inset-0 bg-black/90 backdrop-blur-md"
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        onClick={onClose} 
+        className="absolute inset-0 bg-black/60 backdrop-blur-md" 
       />
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative w-full max-w-sm bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-8 text-center"
+        initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+        animate={{ scale: 1, opacity: 1, y: 0 }} 
+        exit={{ scale: 0.9, opacity: 0, y: 10 }}
+        className="relative w-full max-w-sm bg-[#121212] border border-white/10 rounded-2xl shadow-2xl p-8 text-center"
       >
-        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Warning size={32} weight="bold" />
+        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+          <Warning size={32} className="text-red-500" weight="fill" />
         </div>
-        <h3 className="text-xl font-black uppercase tracking-tighter mb-2 text-white">Excluir Registro?</h3>
-        <p className="text-white/50 text-sm mb-8">
-          Tem certeza que deseja remover <span className="text-white font-bold italic">"{itemName}"</span> permanentemente?
+        <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Confirmar Exclusão</h3>
+        <p className="text-sm text-white/40 mb-8 leading-relaxed">
+          Tem certeza que deseja remover <span className="text-white font-bold">&quot;{title}&quot;</span>? Esta ação não pode ser desfeita.
         </p>
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <button 
-            onClick={onClose}
-            className="flex-1 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] bg-white/5 hover:bg-white/10 text-white transition-all"
+            onClick={onClose} 
+            className="flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] bg-white/5 hover:bg-white/10 transition-all text-white/60"
           >
             Cancelar
           </button>
           <button 
-            onClick={onConfirm}
-            className="flex-1 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] bg-red-500 hover:bg-red-600 text-white transition-all shadow-lg shadow-red-500/20"
+            onClick={onConfirm} 
+            className="flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] bg-red-500 hover:bg-red-600 transition-all text-white shadow-lg shadow-red-500/20"
           >
             Excluir
           </button>
@@ -81,50 +69,44 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, itemName }: any) => {
 export function HighlightsCarousel() {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [itemToDelete, setItemToDelete] = useState<Highlight | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string; title: string }>({ 
+    isOpen: false, 
+    id: '', 
+    title: '' 
+  });
 
-  const loadHighlights = () => {
+  const loadHighlights = useCallback(() => {
     const saved = localStorage.getItem('brain-os-highlights');
     if (saved) {
       const allItems: Highlight[] = JSON.parse(saved);
-      // Filter out 'Filme' (Movies are for Mural Wishlist only)
-      setHighlights(allItems.filter(h => h.category !== 'Filme'));
-    } else {
-      setHighlights(defaultHighlights);
-      localStorage.setItem('brain-os-highlights', JSON.stringify(defaultHighlights));
+      // Filter out 'Filme' (Movies) for the main carousel
+      const filtered = allItems.filter(h => h.category !== 'Filme');
+      setHighlights(filtered);
     }
-  };
-
-  useEffect(() => {
-    loadHighlights();
-    window.addEventListener('highlightsUpdated', loadHighlights);
-    return () => window.removeEventListener('highlightsUpdated', loadHighlights);
   }, []);
 
-  const handleDelete = () => {
-    if (itemToDelete) {
-      const updated = highlights.filter(h => h.id !== itemToDelete.id);
-      setHighlights(updated);
-      localStorage.setItem('brain-os-highlights', JSON.stringify(updated));
-      setItemToDelete(null);
-    }
-  };
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
   useEffect(() => {
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
-  }, [highlights]);
+    const timer = setTimeout(() => {
+      loadHighlights();
+    }, 0);
+    
+    window.addEventListener('highlightsUpdated', loadHighlights);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('highlightsUpdated', loadHighlights);
+    };
+  }, [loadHighlights]);
+
+  const removeHighlight = (id: string) => {
+    const saved = localStorage.getItem('brain-os-highlights');
+    if (saved) {
+      const current = JSON.parse(saved);
+      const updated = current.filter((h: Highlight) => h.id !== id);
+      localStorage.setItem('brain-os-highlights', JSON.stringify(updated));
+      loadHighlights();
+      setConfirmModal({ isOpen: false, id: '', title: '' });
+    }
+  };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -149,116 +131,98 @@ export function HighlightsCarousel() {
            </motion.h2>
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="flex gap-4">
           <button 
             onClick={() => scroll('left')}
-            disabled={!canScrollLeft}
-            className={`w-12 h-12 rounded-full border border-black/5 flex items-center justify-center transition-all ${
-              canScrollLeft ? 'bg-white hover:bg-black/5 text-titanium-100 shadow-sm' : 'opacity-30 cursor-not-allowed'
-            }`}
+            className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all group"
           >
-            <CaretLeft size={24} />
+            <CaretLeft size={24} className="group-active:scale-90 transition-transform" />
           </button>
           <button 
             onClick={() => scroll('right')}
-            disabled={!canScrollRight}
-            className={`w-12 h-12 rounded-full border border-black/5 flex items-center justify-center transition-all ${
-              canScrollRight ? 'bg-white hover:bg-black/5 text-titanium-100 shadow-sm' : 'opacity-30 cursor-not-allowed'
-            }`}
+            className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all group"
           >
-            <CaretRight size={24} />
+            <CaretRight size={24} className="group-active:scale-90 transition-transform" />
           </button>
         </div>
       </div>
 
       <div 
         ref={scrollRef}
-        onScroll={checkScroll}
-        className="flex gap-10 overflow-x-auto scrollbar-hide px-6 md:px-12 pb-16 scroll-smooth snap-x snap-mandatory"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex gap-8 overflow-x-auto px-6 md:px-[calc((100vw-1400px)/2+48px)] no-scrollbar pb-12 snap-x snap-mandatory scroll-smooth"
       >
         {highlights.map((item, index) => (
           <motion.div
             key={item.id}
-            initial={{ opacity: 0, x: 50, rotate: index % 2 === 0 ? 1 : -1 }}
+            initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.02, rotate: 0, zIndex: 20 }}
             viewport={{ once: false }}
-            transition={{ delay: index * 0.1, type: 'spring', stiffness: 100 }}
-            className="flex-none w-[85vw] md:w-[480px] lg:w-[550px] bg-white p-5 pb-24 rounded-sm shadow-[0_20px_50px_-15px_rgba(0,0,0,0.2)] border border-black/5 snap-start relative group flex flex-col"
+            transition={{ delay: index * 0.1, duration: 0.8 }}
+            className="flex-shrink-0 w-[280px] md:w-[350px] snap-center group relative pt-4"
           >
             {/* Delete Button */}
             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setItemToDelete(item);
-              }}
-              className="absolute top-8 right-8 z-30 w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xl hover:bg-red-600 scale-90 hover:scale-100"
+              onClick={() => setConfirmModal({ isOpen: true, id: item.id, title: item.title })}
+              className="absolute top-2 right-2 z-30 w-8 h-8 bg-white/90 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
             >
-              <Trash size={24} weight="bold" />
+              <X size={16} weight="bold" />
             </button>
 
-            <div className="w-full aspect-[4/5] overflow-hidden rounded-xs relative mb-10 bg-black/5">
-              <img 
-                src={item.imageUrl} 
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/[0.03]" />
-              
-              <div className="absolute top-5 left-5">
-                 <span className="px-4 py-2 bg-white/60 backdrop-blur-xl rounded-full text-[10px] font-bold uppercase tracking-widest text-black border border-white/50 shadow-sm">
-                   {item.category}
-                 </span>
-              </div>
-            </div>
-            
-            <div className="px-3 min-h-[100px] flex flex-col justify-end relative">
-               <h3 className="text-3xl md:text-4xl font-mono text-titanium-100 tracking-tighter mb-2 opacity-90 uppercase italic leading-none truncate">
-                 {item.title}
-               </h3>
-               <p className="text-titanium-400 text-xs md:text-sm font-mono font-light leading-relaxed italic opacity-70 line-clamp-2">
-                 {item.description}
-               </p>
+            {/* Polaroid Container */}
+            <div className="bg-white p-4 pb-12 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-sm rotate-1 group-hover:rotate-0 transition-transform duration-500 border border-black/[0.02]">
+               <div className="relative aspect-[3/4] overflow-hidden mb-6 bg-gray-100">
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+               </div>
                
-               {/* Stars on their own line */}
-               {item.rating && item.rating > 0 && (
-                 <div className="flex gap-1 mt-3">
-                   {Array.from({ length: item.rating }).map((_, i) => (
-                     <Star key={i} size={14} weight="fill" className="text-yellow-500" />
-                   ))}
-                 </div>
-               )}
+               <div className="px-1 text-center relative min-h-[80px] flex flex-col justify-center">
+                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-azure-500 mb-1 block">
+                    {item.category}
+                  </span>
+                  <h3 className="text-xl font-bold tracking-tight text-titanium-100 mb-1 leading-tight line-clamp-1 italic">
+                    {item.title}
+                  </h3>
+                  
+                  {/* Rating Stars Row */}
+                  <div className="flex justify-center gap-0.5 text-azure-500/80 mt-1">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} size={14} weight={(item.rating || 0) >= s ? "fill" : "bold"} className={ (item.rating || 0) >= s ? "opacity-100" : "opacity-20"} />
+                    ))}
+                  </div>
 
-               {/* Heart in the bottom right corner */}
-               {item.isLiked && (
-                 <div className="absolute bottom-0 right-0 text-red-500">
-                    <Heart size={24} weight="fill" />
-                 </div>
-               )}
+                  {/* Like Badge - Independent position */}
+                  {item.isLiked && (
+                    <div className="absolute bottom-[-15px] right-2">
+                       <Heart size={20} weight="fill" className="text-red-500 drop-shadow-sm" />
+                    </div>
+                  )}
+               </div>
             </div>
           </motion.div>
         ))}
-        <div className="flex-none w-2 md:w-20" />
+
+        {highlights.length === 0 && (
+          <div className="w-full py-20 flex flex-col items-center justify-center opacity-20 border-2 border-dashed border-black/10 rounded-3xl mx-6">
+            <Trophy size={60} weight="thin" />
+            <p className="mt-4 font-bold tracking-widest uppercase text-sm">Nenhum destaque ainda</p>
+          </div>
+        )}
       </div>
 
-      {/* Manual Confirm Modal */}
       <AnimatePresence>
-        {itemToDelete && (
+        {confirmModal.isOpen && (
           <ConfirmModal 
             isOpen={true} 
-            onClose={() => setItemToDelete(null)} 
-            onConfirm={handleDelete}
-            itemName={itemToDelete.title}
+            onClose={() => setConfirmModal({ isOpen: false, id: '', title: '' })}
+            onConfirm={() => removeHighlight(confirmModal.id)}
+            title={confirmModal.title}
           />
         )}
       </AnimatePresence>
-
-      <div className="flex md:hidden justify-center gap-2 mt-4">
-        {highlights.map((_, i) => (
-           <div key={i} className="w-1.5 h-1.5 rounded-full bg-titanium-500 opacity-40" />
-        ))}
-      </div>
     </section>
   );
 }
