@@ -46,7 +46,7 @@ export function Hero() {
               transition={{ duration: 1, delay: 0.2 }}
               className="text-2xl md:text-3xl text-titanium-300 max-w-2xl font-light leading-relaxed mt-4"
             >
-              Uma extensão de titânio para a mente.
+              Uma extensão mental.
             </motion.p>
             
             <motion.div

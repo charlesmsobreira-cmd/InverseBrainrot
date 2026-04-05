@@ -28,14 +28,15 @@ const Toast = ({ message, type, onClose }: any) => (
 // --- Sub-componente: Lista de Favoritos/Wishlist ---
 const FavoriteList = ({ logs, category, textColor }: any) => {
   // Map standard title to highlight category
-  const mapCategory = {
+  const mapCategory: Record<string, string> = {
     'Músicas': 'Música',
     'Livros': 'Livro',
     'Filmes': 'Filme'
-  }[category];
+  };
+  const categoryKey = mapCategory[category as keyof typeof mapCategory] || '';
 
   const filtered = logs
-    .filter((log: any) => log.category === mapCategory)
+    .filter((log: any) => log.category === categoryKey)
     .slice(0, 5);
 
   if (filtered.length === 0) return null;
@@ -59,7 +60,7 @@ const FavoriteList = ({ logs, category, textColor }: any) => {
             transition={{ delay: index * 0.1 }}
             className={`text-sm md:text-base font-bold tracking-tight border-b pb-2 ${textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'}`}
           >
-            {index + 1}. {item.title}
+            {item.title}
           </motion.li>
         ))}
       </ul>

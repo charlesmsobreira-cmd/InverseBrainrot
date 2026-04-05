@@ -138,15 +138,6 @@ export function HighlightsCarousel() {
     <section className="w-full py-24 bg-white overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 mb-12 flex items-end justify-between">
         <div>
-           <motion.div 
-             initial={{ opacity: 0, y: 20 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: false }}
-             className="flex items-center gap-2 text-azure-500 font-bold tracking-widest uppercase text-xs mb-3"
-           >
-             <Trophy size={16} weight="fill" />
-             Conquistas recentes
-           </motion.div>
            <motion.h2 
              initial={{ opacity: 0, y: 20 }}
              whileInView={{ opacity: 1, y: 0 }}
