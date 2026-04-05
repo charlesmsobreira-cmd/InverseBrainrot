@@ -127,7 +127,7 @@ function RoutineSection() {
     });
   };
   return (
-    <section id="rotina" className="w-full bg-white py-32 border-b border-black/[0.05] relative overflow-hidden">
+    <section id="rotina" className="w-full bg-transparent pt-8 pb-32 relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
         <div className="z-10">
           <motion.h2 initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Minha Rotina</motion.h2>
@@ -135,7 +135,6 @@ function RoutineSection() {
           <Link href="/rotina"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-8 px-8 py-4 bg-azure-500 text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-azure-600 transition-colors rounded-full">Ver Calendário Completo</motion.button></Link>
         </div>
         <div className="relative">
-          <div className="absolute inset-0 bg-titanium-800 blur-[100px] opacity-30 rounded-full mix-blend-screen pointer-events-none" />
           <div className="p-8 glass-panel rounded-3xl relative z-10">
             <h3 className="text-xl font-semibold text-titanium-100 uppercase tracking-tighter mb-6">To do List</h3>
             <div className="flex flex-col gap-3">
@@ -222,17 +221,17 @@ function ConsumeSection() {
   };
 
   const images = [
-    'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?q=80&w=600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1578301978018-3005759f2ed8?q=80&w=600&auto=format&fit=crop'
+    '/consumo/art1.png',
+    '/consumo/art2.png',
+    '/consumo/art3.png',
+    '/consumo/art4.png'
   ];
 
   return (
-    <section id="consumo" className="w-full bg-titanium-700 py-32 border-b border-black/[0.05] relative overflow-hidden pb-48">
+    <section id="consumo" className="w-full bg-white py-32 border-b border-black/[0.05] relative overflow-hidden pb-48">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
         <div className="order-2 md:order-1 relative flex justify-center">
-          <div className="grid grid-cols-2 gap-4 translate-x-6">
+          <div className="grid grid-cols-2 gap-4">
             {images.map((img, i) => (
               <motion.div 
                 key={i} 
@@ -245,7 +244,7 @@ function ConsumeSection() {
                 <img 
                   src={img} 
                   alt="Art masterpiece" 
-                  className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-all duration-200" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
                   onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                     const num = i + 1;
                     (e.target as HTMLImageElement).src = `https://placehold.co/300x400/121212/white?text=Arte+${num}`;

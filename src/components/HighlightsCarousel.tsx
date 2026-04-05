@@ -10,6 +10,8 @@ interface Highlight {
   description: string;
   imageUrl: string;
   category: string;
+  subtitle?: string; // New: Artist/Author
+  date?: string;     // New: Formatted date
   rating?: number;
   isLiked?: boolean;
 }
@@ -66,6 +68,31 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title }: ConfirmModalProps) 
   );
 };
 
+const defaultHighlights: Highlight[] = [
+  {
+    id: 'default-1',
+    title: 'One More Light',
+    subtitle: 'Linkin Park',
+    date: '20/07',
+    description: 'Em 20/07, ouviu One More Light de Linkin Park. "Who cares if one more light goes out? Well, I do."',
+    imageUrl: '/logs/onemorelight.png',
+    category: 'Música',
+    rating: 5,
+    isLiked: true
+  },
+  {
+    id: 'default-2',
+    title: 'Skeletons',
+    subtitle: 'Travis Scott',
+    date: '21/07',
+    description: 'Em 21/07, ouviu Skeletons de Travis Scott. Mike Dean production is magic.',
+    imageUrl: '/logs/skeletons.png',
+    category: 'Música',
+    rating: 5,
+    isLiked: true
+  }
+];
+
 export function HighlightsCarousel() {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -77,12 +104,17 @@ export function HighlightsCarousel() {
 
   const loadHighlights = useCallback(() => {
     const saved = localStorage.getItem('brain-os-highlights');
+    let allItems: Highlight[] = [];
+    
     if (saved) {
-      const allItems: Highlight[] = JSON.parse(saved);
-      // Filter out 'Filme' (Movies) for the main carousel
-      const filtered = allItems.filter(h => h.category !== 'Filme');
-      setHighlights(filtered);
+      allItems = JSON.parse(saved);
+    } else {
+      allItems = defaultHighlights;
     }
+
+    // Filter out 'Filme' (Movies) for the main carousel
+    const filtered = allItems.filter(h => h.category !== 'Filme');
+    setHighlights(filtered);
   }, []);
 
   useEffect(() => {
@@ -117,7 +149,7 @@ export function HighlightsCarousel() {
   };
 
   return (
-    <section className="w-full py-24 bg-white overflow-hidden">
+    <section className="w-full pt-24 pb-16 bg-transparent relative z-20">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 mb-12 flex items-end justify-between">
         <div>
            <motion.h2 
@@ -149,7 +181,7 @@ export function HighlightsCarousel() {
 
       <div 
         ref={scrollRef}
-        className="flex gap-8 overflow-x-auto px-6 md:px-[calc((100vw-1400px)/2+48px)] no-scrollbar pb-12 snap-x snap-mandatory scroll-smooth"
+        className="flex gap-8 overflow-x-auto px-6 md:px-[calc((100vw-1400px)/2+48px)] no-scrollbar pb-32 pt-8 snap-x snap-mandatory scroll-smooth"
       >
         {highlights.map((item, index) => (
           <motion.div
@@ -158,7 +190,7 @@ export function HighlightsCarousel() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false }}
             transition={{ delay: index * 0.1, duration: 0.8 }}
-            className="flex-shrink-0 w-[280px] md:w-[350px] snap-center group relative pt-4"
+            className="flex-shrink-0 w-[320px] md:w-[450px] snap-center group relative pt-4"
           >
             {/* Delete Button */}
             <button 
@@ -169,35 +201,51 @@ export function HighlightsCarousel() {
             </button>
 
             {/* Polaroid Container */}
-            <div className="bg-white p-4 pb-12 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-sm rotate-1 group-hover:rotate-0 transition-transform duration-500 border border-black/[0.02]">
-               <div className="relative aspect-[3/4] overflow-hidden mb-6 bg-gray-100">
+            <div className="bg-white p-6 md:p-8 md:pb-24 pb-20 shadow-[0_30px_80px_rgba(0,0,0,0.12)] rounded-sm rotate-1 group-hover:rotate-0 transition-transform duration-500 border border-black/[0.03]">
+               <div className="relative aspect-[4/5] overflow-hidden mb-8 bg-gray-100 shadow-inner">
                   <img 
                     src={item.imageUrl} 
                     alt={item.title} 
-                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
+                    className="w-full h-full object-cover transition-all duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  {/* Category Badge - INSIDE IMAGE */}
+                  <div className="absolute top-4 left-4 bg-white/30 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 shadow-sm">
+                    <span className="text-[11px] md:text-xs font-black tracking-widest text-black uppercase opacity-70">
+                      {item.category}
+                    </span>
+                  </div>
                </div>
                
-               <div className="px-1 text-center relative min-h-[80px] flex flex-col justify-center">
-                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-azure-500 mb-1 block">
-                    {item.category}
-                  </span>
-                  <h3 className="text-xl font-bold tracking-tight text-titanium-100 mb-1 leading-tight line-clamp-1 italic">
+               <div className="px-2 text-left relative min-h-[100px]">
+                  <h3 className="text-4xl md:text-5xl font-serif italic tracking-tighter text-black/90 mb-2 leading-none uppercase">
                     {item.title}
                   </h3>
                   
+                  {item.subtitle && (
+                    <p className="text-xl md:text-2xl font-bold tracking-tight text-black/60 mb-3 opacity-90">
+                      {item.subtitle}
+                    </p>
+                  )}
+                  
+                  <p className="text-[13px] md:text-sm font-mono italic text-black/40 leading-relaxed mb-4 max-w-[90%]">
+                    {item.subtitle 
+                      ? `${item.category === 'Livro' ? 'Lido' : item.category === 'Filme' ? 'Assistido' : 'Ouvida'} em ${item.date || 'Recente'}`
+                      : item.description // Fallback for old items
+                    }
+                  </p>
+                  
                   {/* Rating Stars Row */}
-                  <div className="flex justify-center gap-0.5 text-azure-500/80 mt-1">
+                  <div className="flex gap-1 text-black/20">
                     {[1,2,3,4,5].map(s => (
-                      <Star key={s} size={14} weight={(item.rating || 0) >= s ? "fill" : "bold"} className={ (item.rating || 0) >= s ? "opacity-100" : "opacity-20"} />
+                      <Star key={s} size={14} weight="fill" className={ (item.rating || 0) >= s ? "text-azure-500" : "opacity-20"} />
                     ))}
                   </div>
 
-                  {/* Like Badge - Independent position */}
+                  {/* Like Badge */}
                   {item.isLiked && (
-                    <div className="absolute bottom-[-15px] right-2">
-                       <Heart size={20} weight="fill" className="text-red-500 drop-shadow-sm" />
+                    <div className="absolute bottom-1 right-2">
+                       <Heart size={20} weight="fill" className="text-red-500 drop-shadow-sm opacity-80" />
                     </div>
                   )}
                </div>

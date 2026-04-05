@@ -12,6 +12,8 @@ interface LogItem {
   description: string;
   imageUrl: string;
   category: string;
+  subtitle?: string;
+  date?: string;
   rating?: number;
   isLiked?: boolean;
 }
@@ -146,7 +148,9 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
     const newLog: LogItem = {
       id: Date.now().toString(),
       title: name,
-      description: descriptionText,
+      description: descriptionText, // Keeps full description for mural/backward compatibility
+      subtitle: extra, // Artist/Author
+      date: date,
       imageUrl: getPreviewUrl(),
       category: internalCategory,
       rating,

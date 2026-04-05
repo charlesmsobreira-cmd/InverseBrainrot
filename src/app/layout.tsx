@@ -19,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} dark`}>
-      <body className="font-sans antialiased bg-titanium-950 text-titanium-50">
+    <html lang="en" className={`${outfit.variable}`}>
+      <body className="font-sans antialiased bg-white text-black">
         <div className="min-h-[100dvh] transition-all duration-300">
           {children}
         </div>
