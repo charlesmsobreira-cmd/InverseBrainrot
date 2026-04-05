@@ -136,30 +136,33 @@ export function HighlightsCarousel() {
         {highlights.map((item, index) => (
           <motion.div
             key={item.id}
-            initial={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0, x: 50, rotate: index % 2 === 0 ? 1 : -1 }}
             whileInView={{ opacity: 1, x: 0 }}
+            whileHover={{ scale: 1.02, rotate: 0, zIndex: 20 }}
             viewport={{ once: false }}
-            transition={{ delay: index * 0.1 }}
-            className="flex-none w-[85vw] md:w-[600px] lg:w-[800px] aspect-[16/9] md:aspect-[21/9] bg-titanium-700 rounded-[2.5rem] overflow-hidden relative snap-start shadow-xl border border-black/5 group"
+            transition={{ delay: index * 0.1, type: 'spring', stiffness: 100 }}
+            className="flex-none w-[85vw] md:w-[600px] lg:w-[700px] bg-white p-4 pb-16 rounded-sm shadow-[0_15px_35px_-12px_rgba(0,0,0,0.15)] border border-black/5 snap-start relative group"
           >
-            <img 
-              src={item.imageUrl} 
-              alt={item.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+            <div className="w-full h-full overflow-hidden rounded-xs relative">
+              <img 
+                src={item.imageUrl} 
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/[0.03]" />
+            </div>
             
-            <div className="absolute top-8 left-8 flex flex-col gap-2">
-               <span className="px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/20">
+            <div className="absolute top-8 left-8 flex flex-col gap-2 z-10">
+               <span className="px-3 py-1 bg-white/40 backdrop-blur-md rounded-full text-[9px] font-bold uppercase tracking-widest text-titanium-100 border border-white/50">
                  {item.category}
                </span>
             </div>
 
-            <div className="absolute bottom-10 left-10 right-10">
-               <h3 className="text-3xl md:text-5xl font-bold text-white tracking-tighter mb-4 drop-shadow-lg">
+            <div className="absolute bottom-4 left-6 right-6">
+               <h3 className="text-2xl md:text-3xl font-mono text-titanium-100 tracking-tighter mb-1 opacity-80 uppercase italic">
                  {item.title}
                </h3>
-               <p className="text-white/80 text-lg md:text-xl font-light leading-relaxed max-w-2xl drop-shadow-md">
+               <p className="text-titanium-400 text-sm font-mono font-light leading-relaxed max-w-2xl italic">
                  {item.description}
                </p>
             </div>

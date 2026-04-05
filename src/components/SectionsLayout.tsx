@@ -273,37 +273,6 @@ function ConsumeSection() {
                  Galeria
                </motion.button>
              </Link>
-
-             <motion.button 
-               whileHover={{ scale: 1.05 }}
-               whileTap={{ scale: 0.95 }}
-               onClick={() => {
-                 const title = prompt('Título da Conquista (ex: Nome do Livro):');
-                 if (!title) return;
-                 const desc = prompt('Breve Resenha/Descrição:');
-                 const category = prompt('Categoria (Livro, Filme, Curso...):') || 'Destaque';
-                 const imageUrl = prompt('URL da Imagem de Capa (opcional):') || `https://picsum.photos/seed/${Math.random()}/800/600`;
-                 
-                 const newHighlight = { 
-                   id: Date.now().toString(), 
-                   title, 
-                   description: desc || '', 
-                   imageUrl, 
-                   category 
-                 };
-                 
-                 const saved = JSON.parse(localStorage.getItem('brain-os-highlights') || '[]');
-                 const updated = [newHighlight, ...saved];
-                 localStorage.setItem('brain-os-highlights', JSON.stringify(updated));
-                 
-                 // Notify the carousel to update
-                 window.dispatchEvent(new Event('highlightsUpdated'));
-                 alert('Nova conquista adicionada aos Destaques!');
-               }}
-               className="px-8 py-0 h-12 bg-azure-500 text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-azure-600 transition-colors rounded-full"
-             >
-               Finalizar Conquista
-             </motion.button>
           </div>
         </div>
       </div>
