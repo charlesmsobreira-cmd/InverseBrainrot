@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Titanium Palette */
+  --color-titanium-50: #f4f4f5;
+  --color-titanium-100: #e4e4e7;
+  --color-titanium-200: #d4d4d8;
+  --color-titanium-300: #a1a1aa;
+  --color-titanium-400: #71717a;
+  --color-titanium-500: #52525b;
+  --color-titanium-600: #3f3f46;
+  --color-titanium-700: #27272a;
+  --color-titanium-800: #18181b;
+  --color-titanium-900: #0f0f11;
+  --color-titanium-950: #0a0a0b;
+}
+
+@layer base {
+  :root {
+    --background: var(--color-titanium-950);
+    --foreground: var(--color-titanium-50);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased min-h-[100dvh] overflow-x-hidden selection:bg-titanium-700 selection:text-white;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-titanium-900/40 backdrop-blur-xl border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)];
+  }
+  
+  .titanium-card {
+    @apply bg-titanium-900 border border-white/5 rounded-[2.5rem] p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)];
+  }
+}
