@@ -91,10 +91,6 @@ const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
       animate={{ opacity: 1, y: 0 }}
       className="mb-10 w-full max-w-xs"
     >
-      <div className="flex items-center gap-2 mb-4 justify-center opacity-40">
-        <ListBullets size={16} weight="bold" />
-        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{category === 'Filmes' ? 'Wishlist' : 'Favoritos'}</span>
-      </div>
       <ul className="space-y-3">
         {filtered.map((item, index) => (
           <motion.li 
@@ -128,8 +124,13 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
   };
 
   const handleSave = () => {
-    if (!name || !imageUrl || !category) {
-      onNotify('Nome e Arquivo são obrigatórios!', 'error');
+    if (!name || !category) {
+      onNotify('Nome da obra é obrigatório!', 'error');
+      return;
+    }
+
+    if (category !== 'Filmes' && !imageUrl) {
+      onNotify('Nome longo do arquivo da imagem é obrigatório!', 'error');
       return;
     }
 
@@ -143,7 +144,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       ? `Em ${date}, ouviu ${name} de ${extra}.${reviewPart}`
       : category === 'Livros'
       ? `Em ${date}, leu ${name} de ${extra}.${reviewPart}`
-      : `Em ${date}, assistiu ${name}.${reviewPart}`;
+      : `Na wishlist.`;
 
     const newLog: LogItem = {
       id: Date.now().toString(),
@@ -192,47 +193,54 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
         </div>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className={`grid ${category === 'Filmes' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Título / Obra</label>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 transition-all text-sm" />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">{category === 'Músicas' ? 'Artista' : category === 'Livros' ? 'Autor' : 'Diretor'}</label>
-              <input type="text" value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 transition-all text-sm" />
-            </div>
+            
+            {category !== 'Filmes' && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">{category === 'Músicas' ? 'Artista' : category === 'Livros' ? 'Autor' : 'Diretor'}</label>
+                <input type="text" value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 transition-all text-sm" />
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-8 py-2 border-y border-white/5">
-             <div className="space-y-2">
-               <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Avaliação</label>
-               <div className="flex gap-1 text-azure-500">
-                 {[1,2,3,4,5].map(s => <button key={s} onClick={() => setRating(s)} className={`transition-all ${rating >= s ? 'opacity-100 scale-110' : 'opacity-20 hover:opacity-50'}`}><Star size={20} weight={rating >= s ? "fill" : "bold"} /></button>)}
-               </div>
-             </div>
-             <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Gostou?</label>
-                <button onClick={() => setIsLiked(!isLiked)} className={`transition-all ${isLiked ? 'text-red-500 scale-110' : 'text-white/20 hover:text-white/40'}`}><Heart size={24} weight={isLiked ? "fill" : "bold"} /></button>
-             </div>
-          </div>
+          {category !== 'Filmes' && (
+            <>
+              <div className="flex items-center gap-8 py-2 border-y border-white/5">
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Avaliação</label>
+                   <div className="flex gap-1 text-azure-500">
+                     {[1,2,3,4,5].map(s => <button key={s} onClick={() => setRating(s)} className={`transition-all ${rating >= s ? 'opacity-100 scale-110' : 'opacity-20 hover:opacity-50'}`}><Star size={20} weight={rating >= s ? "fill" : "bold"} /></button>)}
+                   </div>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Gostou?</label>
+                    <button onClick={() => setIsLiked(!isLiked)} className={`transition-all ${isLiked ? 'text-red-500 scale-110' : 'text-white/20 hover:text-white/40'}`}><Heart size={24} weight={isLiked ? "fill" : "bold"} /></button>
+                 </div>
+              </div>
 
-          <div className="space-y-2">
-             <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Sua Resenha</label>
-             <textarea value={review} onChange={(e) => setReview(e.target.value)} placeholder="" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 h-32 resize-none transition-all text-sm" />
-          </div>
+              <div className="space-y-2">
+                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Sua Resenha</label>
+                 <textarea value={review} onChange={(e) => setReview(e.target.value)} placeholder="" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 h-32 resize-none transition-all text-sm" />
+              </div>
 
-          <div className="space-y-4">
-             <div className="space-y-2">
-               <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Nome do Arquivo (PNG em /public/logs/)</label>
-               <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Ex: madona.png" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 transition-all text-[10px] font-mono" />
-             </div>
-             {imageUrl && (
-               <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                 <img src={getPreviewUrl()} alt="Preview" className="w-16 h-16 rounded-lg object-cover bg-black/40" onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/121212/white?text=Erro'; }} />
-                 <p className="text-[10px] font-mono text-azure-400 truncate">{getPreviewUrl()}</p>
-               </div>
-             )}
-          </div>
+              <div className="space-y-4">
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Nome do Arquivo (PNG em /public/logs/)</label>
+                   <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Ex: madona.png" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 transition-all text-[10px] font-mono" />
+                 </div>
+                 {imageUrl && (
+                   <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                     <img src={getPreviewUrl()} alt="Preview" className="w-16 h-16 rounded-lg object-cover bg-black/40" onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/121212/white?text=Erro'; }} />
+                     <p className="text-[10px] font-mono text-azure-400 truncate">{getPreviewUrl()}</p>
+                   </div>
+                 )}
+              </div>
+            </>
+          )}
 
           <div className="flex gap-4 pt-4">
             <button onClick={onClose} className="flex-1 py-4 rounded-xl font-bold uppercase tracking-widest text-xs bg-white/5 hover:bg-white/10 transition-all">Cancelar</button>
@@ -267,8 +275,8 @@ const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, rev
          </motion.div>
       </div>
       <div className={`relative flex justify-center items-center w-full ${reverse ? 'md:order-1' : ''}`}>
-         <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-lg aspect-square overflow-hidden shadow-2xl rounded-sm">
-           <img src={image} alt={title} className="w-full h-full object-cover" />
+         <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-sm md:max-w-md flex justify-center">
+           <img src={image} alt={title} className="w-auto h-auto max-h-[70vh] object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
          </motion.div>
       </div>
     </div>
