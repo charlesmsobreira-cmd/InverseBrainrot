@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { CaretLeft, CaretRight, Play, Pause, Trophy, Trash, X, Warning } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, Play, Pause, Trophy, Trash, X, Warning, Star, Heart } from '@phosphor-icons/react';
 import { useState, useEffect, useRef } from 'react';
 
 interface Highlight {
@@ -10,6 +10,8 @@ interface Highlight {
   description: string;
   imageUrl: string;
   category: string;
+  rating?: number;
+  isLiked?: boolean;
 }
 
 const defaultHighlights: Highlight[] = [
@@ -86,7 +88,9 @@ export function HighlightsCarousel() {
   const loadHighlights = () => {
     const saved = localStorage.getItem('brain-os-highlights');
     if (saved) {
-      setHighlights(JSON.parse(saved));
+      const allItems: Highlight[] = JSON.parse(saved);
+      // Filter out 'Filme' (Movies are for Mural Wishlist only)
+      setHighlights(allItems.filter(h => h.category !== 'Filme'));
     } else {
       setHighlights(defaultHighlights);
       localStorage.setItem('brain-os-highlights', JSON.stringify(defaultHighlights));
@@ -218,13 +222,29 @@ export function HighlightsCarousel() {
               </div>
             </div>
             
-            <div className="px-3 min-h-[80px] flex flex-col justify-end">
-               <h3 className="text-3xl md:text-4xl font-mono text-titanium-100 tracking-tighter mb-3 opacity-90 uppercase italic leading-none truncate">
+            <div className="px-3 min-h-[100px] flex flex-col justify-end relative">
+               <h3 className="text-3xl md:text-4xl font-mono text-titanium-100 tracking-tighter mb-2 opacity-90 uppercase italic leading-none truncate">
                  {item.title}
                </h3>
-               <p className="text-titanium-400 text-sm md:text-base font-mono font-light leading-relaxed italic opacity-70 line-clamp-2">
+               <p className="text-titanium-400 text-xs md:text-sm font-mono font-light leading-relaxed italic opacity-70 line-clamp-2">
                  {item.description}
                </p>
+               
+               {/* Stars on their own line */}
+               {item.rating && item.rating > 0 && (
+                 <div className="flex gap-1 mt-3">
+                   {Array.from({ length: item.rating }).map((_, i) => (
+                     <Star key={i} size={14} weight="fill" className="text-yellow-500" />
+                   ))}
+                 </div>
+               )}
+
+               {/* Heart in the bottom right corner */}
+               {item.isLiked && (
+                 <div className="absolute bottom-0 right-0 text-red-500">
+                    <Heart size={24} weight="fill" />
+                 </div>
+               )}
             </div>
           </motion.div>
         ))}
