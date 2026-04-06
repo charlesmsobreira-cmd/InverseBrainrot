@@ -2,47 +2,39 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Tray, FloppyDisk, Trash, CloudArrowUp } from '@phosphor-icons/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function InboxPage() {
   const [note, setNote] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
-  // Load from localStorage on mount
+  // Load from Supabase on mount
   useEffect(() => {
-    const savedNote = localStorage.getItem('brain-os-inbox');
-    if (savedNote) {
-      const timer = setTimeout(() => {
-        setNote(savedNote);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
+    const loadNote = async () => {
+      const { data } = await supabase.from('inbox').select('content').eq('id', 1).single();
+      if (data) setNote(data.content || '');
+    };
+    loadNote();
   }, []);
 
-  // Auto-save logic with debounce-like effect
+  // Auto-save logic with debounce
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (note !== localStorage.getItem('brain-os-inbox')) {
-        setIsSaving(true);
-        localStorage.setItem('brain-os-inbox', note);
-        
-        // Mock a brief saving indicator delay
-        setTimeout(() => {
-          setIsSaving(false);
-          setLastSaved(new Date().toLocaleTimeString());
-        }, 600);
-      }
-    }, 1000);
-
+    const timer = setTimeout(async () => {
+      setIsSaving(true);
+      await supabase.from('inbox').upsert({ id: 1, content: note, updated_at: new Date().toISOString() });
+      setIsSaving(false);
+      setLastSaved(new Date().toLocaleTimeString());
+    }, 1200);
     return () => clearTimeout(timer);
   }, [note]);
 
-  const clearNote = () => {
+  const clearNote = async () => {
     if (confirm('Tem certeza que deseja apagar tudo? Esta ação não pode ser desfeita.')) {
       setNote('');
-      localStorage.removeItem('brain-os-inbox');
+      await supabase.from('inbox').upsert({ id: 1, content: '', updated_at: new Date().toISOString() });
     }
   };
 

@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { CaretLeft, CaretRight, Trophy, X, Warning, Star, Heart } from '@phosphor-icons/react';
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface Highlight {
   id: string;
@@ -102,19 +103,22 @@ export function HighlightsCarousel() {
     title: '' 
   });
 
-  const loadHighlights = useCallback(() => {
-    const saved = localStorage.getItem('brain-os-highlights');
-    let allItems: Highlight[] = [];
-    
-    if (saved) {
-      allItems = JSON.parse(saved);
+  const loadHighlights = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('highlights')
+      .select('*')
+      .neq('category', 'Filme')
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      const mapped = data.map(item => ({
+        ...item,
+        imageUrl: item.image_url,
+        isLiked: item.is_liked
+      }));
+      setHighlights(mapped.length > 0 ? mapped : defaultHighlights);
     } else {
-      allItems = defaultHighlights;
+      setHighlights(defaultHighlights);
     }
-
-    // Filter out 'Filme' (Movies) for the main carousel
-    const filtered = allItems.filter(h => h.category !== 'Filme');
-    setHighlights(filtered);
   }, []);
 
   useEffect(() => {
@@ -129,12 +133,9 @@ export function HighlightsCarousel() {
     };
   }, [loadHighlights]);
 
-  const removeHighlight = (id: string) => {
-    const saved = localStorage.getItem('brain-os-highlights');
-    if (saved) {
-      const current = JSON.parse(saved);
-      const updated = current.filter((h: Highlight) => h.id !== id);
-      localStorage.setItem('brain-os-highlights', JSON.stringify(updated));
+  const removeHighlight = async (id: string) => {
+    const { error } = await supabase.from('highlights').delete().eq('id', id);
+    if (!error) {
       loadHighlights();
       setConfirmModal({ isOpen: false, id: '', title: '' });
     }

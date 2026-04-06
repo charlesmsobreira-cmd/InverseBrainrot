@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, Browser, NotePencil, Plus, Link as LinkIcon, Trash, FileText, X, Stack } from '@phosphor-icons/react';
+import { ArrowLeft, NotePencil, Plus, Link as LinkIcon, Trash, FileText, X, Stack } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
 
 type LinkType = {
   id: string;
@@ -32,8 +33,9 @@ const defaultPage: PageType = {
 // 3: Notepad 0%   | Manager 100%
 
 export default function DiversosPage() {
-  const [pages, setPages] = useState<PageType[]>([defaultPage]);
+  const [pages, setPages] = useState<PageType[]>([]);
   const [activePageId, setActivePageId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Link addition form state
   const [isAddingLink, setIsAddingLink] = useState(false);
@@ -42,67 +44,97 @@ export default function DiversosPage() {
 
   const activePage = pages.find(p => p.id === activePageId);
 
+  // --- Load pages from Supabase on mount ---
+  useEffect(() => {
+    const loadPages = async () => {
+      setIsLoading(true);
+      const { data } = await supabase.from('notepad_pages').select('*').order('created_at', { ascending: true });
+      if (data && data.length > 0) {
+        setPages(data.map(p => ({ ...p, links: p.links || [] })));
+      }
+      setIsLoading(false);
+    };
+    loadPages();
+  }, []);
+
+  // --- Debounced auto-save for notes and title ---
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const persistPage = useCallback((updatedPage: PageType) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      await supabase.from('notepad_pages').update({
+        title: updatedPage.title,
+        notes: updatedPage.notes,
+        links: updatedPage.links,
+        updated_at: new Date().toISOString()
+      }).eq('id', updatedPage.id);
+    }, 800);
+  }, []);
+
   const updateActivePageNotes = (notes: string) => {
     if (!activePageId) return;
-    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, notes } : p));
+    setPages(prev => {
+      const updated = prev.map(p => p.id === activePageId ? { ...p, notes } : p);
+      const page = updated.find(p => p.id === activePageId);
+      if (page) persistPage(page);
+      return updated;
+    });
   };
 
   const updateActivePageTitle = (title: string) => {
     if (!activePageId) return;
-    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, title } : p));
+    setPages(prev => {
+      const updated = prev.map(p => p.id === activePageId ? { ...p, title } : p);
+      const page = updated.find(p => p.id === activePageId);
+      if (page) persistPage(page);
+      return updated;
+    });
   };
 
-  const createPage = () => {
+  const createPage = async () => {
     const newPage: PageType = {
       id: Date.now().toString(),
       title: '',
       notes: '',
       links: []
     };
-    setPages(prev => [...prev, newPage]);
-    setActivePageId(newPage.id);
-    setIsAddingLink(false);
+    const { error } = await supabase.from('notepad_pages').insert([newPage]);
+    if (!error) {
+      setPages(prev => [...prev, newPage]);
+      setActivePageId(newPage.id);
+      setIsAddingLink(false);
+    }
   };
 
-  const deletePage = (id: string, e: React.MouseEvent) => {
+  const deletePage = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (pages.length === 1 && pages[0].id === 'default-1') {
-       // Reset default page instead of deleting if it's the last one
-       setPages([defaultPage]);
-       setActivePageId(null);
-       return;
-    }
+    await supabase.from('notepad_pages').delete().eq('id', id);
     const newPages = pages.filter(p => p.id !== id);
     setPages(newPages);
     if (activePageId === id) setActivePageId(null);
   };
 
-  const addLink = () => {
+  const addLink = async () => {
     if (!newLinkUrl || !newLinkTitle || !activePageId) return;
-    
-    // Auto add http snippet for user convenience
     let finalUrl = newLinkUrl;
-    if (!finalUrl.startsWith('http')) {
-      finalUrl = 'https://' + finalUrl;
-    }
+    if (!finalUrl.startsWith('http')) finalUrl = 'https://' + finalUrl;
 
-    const newLink: LinkType = { 
-      id: Date.now().toString(), 
-      url: finalUrl, 
-      title: newLinkTitle 
-    };
-    
-    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: [...p.links, newLink] } : p));
-    
+    const newLink: LinkType = { id: Date.now().toString(), url: finalUrl, title: newLinkTitle };
+    const updatedLinks = [...(activePage?.links || []), newLink];
+
+    await supabase.from('notepad_pages').update({ links: updatedLinks, updated_at: new Date().toISOString() }).eq('id', activePageId);
+    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: updatedLinks } : p));
     setIsAddingLink(false);
     setNewLinkUrl('');
     setNewLinkTitle('');
   };
 
-  const deleteLink = (linkId: string, e: React.MouseEvent) => {
+  const deleteLink = async (linkId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!activePageId) return;
-    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: p.links.filter(l => l.id !== linkId) } : p));
+    if (!activePageId || !activePage) return;
+    const updatedLinks = activePage.links.filter(l => l.id !== linkId);
+    await supabase.from('notepad_pages').update({ links: updatedLinks, updated_at: new Date().toISOString() }).eq('id', activePageId);
+    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: updatedLinks } : p));
   };
 
   return (
@@ -130,7 +162,15 @@ export default function DiversosPage() {
         
         {/* Painel Esquerdo (Notepad / Empty State) */}
         <div className="flex-1 lg:w-2/3 transition-all duration-300 border-r border-black/5 bg-[#F5F5F7] flex flex-col h-full overflow-hidden">
-          {activePage ? (
+          {isLoading ? (
+            <div className="flex-1 flex items-center justify-center opacity-30">
+              <div className="flex flex-col items-center gap-3">
+                <NotePencil size={40} className="animate-pulse text-azure-500" />
+                <p className="font-mono text-xs uppercase tracking-widest">Carregando...</p>
+              </div>
+            </div>
+          ) : activePage ? (
+
             <>
               <div className="p-6 md:px-8 md:pt-8 md:pb-4 flex-shrink-0">
                 <div className="flex items-center gap-3">

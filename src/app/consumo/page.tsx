@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X, Star, Heart, CheckCircle, WarningCircle, ListBullets } from '@phosphor-icons/react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 
 // --- Interfaces de Tipagem ---
 interface LogItem {
@@ -125,7 +126,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
     return `/logs/${filename}`;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !category) {
       onNotify('Nome da obra é obrigatório!', 'error');
       return;
@@ -138,8 +139,6 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
 
     const date = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     const reviewPart = review.trim() ? ` "${review}"` : '';
-    
-    // Determine internal category name
     const internalCategory = category.slice(0, -1);
 
     const descriptionText = category === 'Músicas' 
@@ -148,32 +147,31 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       ? `Em ${date}, leu ${name} de ${extra}.${reviewPart}`
       : `Na wishlist.`;
 
-    const newLog: LogItem = {
+    const newLog = {
       id: Date.now().toString(),
       title: name,
-      description: descriptionText, // Keeps full description for mural/backward compatibility
-      subtitle: extra, // Artist/Author
+      description: descriptionText,
+      subtitle: extra,
       date: date,
-      imageUrl: getPreviewUrl(),
+      image_url: getPreviewUrl(),
       category: internalCategory,
       rating,
-      isLiked
+      is_liked: isLiked
     };
 
-    const saved = JSON.parse(localStorage.getItem('brain-os-highlights') || '[]');
-    const updated = [newLog, ...saved];
-    localStorage.setItem('brain-os-highlights', JSON.stringify(updated));
-    
-    // Only update home carousel for music and books
+    const { error } = await supabase.from('highlights').insert([newLog]);
+    if (error) {
+      onNotify('Erro ao salvar no banco de dados!', 'error');
+      return;
+    }
+
     if (category !== 'Filmes') {
       window.dispatchEvent(new Event('highlightsUpdated'));
     }
     
-    onRefresh(); // Refresh the list in Mural
+    onRefresh();
     onClose();
     onNotify('Log registrado com sucesso!');
-    
-    // Reset
     setName(''); setExtra(''); setReview(''); setImageUrl(''); setRating(0); setIsLiked(false);
   };
 
@@ -290,9 +288,18 @@ export default function MuralPage() {
   const [modalCategory, setModalCategory] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogItem[]>([]);
 
-  const loadLogs = useCallback(() => {
-    const saved = localStorage.getItem('brain-os-highlights');
-    if (saved) setLogs(JSON.parse(saved));
+  const loadLogs = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('highlights')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      setLogs(data.map(item => ({
+        ...item,
+        imageUrl: item.image_url,
+        isLiked: item.is_liked
+      })));
+    }
   }, []);
 
   useEffect(() => {
