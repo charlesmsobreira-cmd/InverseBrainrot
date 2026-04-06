@@ -120,7 +120,9 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
   const getPreviewUrl = () => {
     if (!imageUrl) return '';
     if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) return imageUrl;
-    return `/logs/${imageUrl}`;
+    // Auto-append .png if not already present
+    const filename = imageUrl.endsWith('.png') ? imageUrl : `${imageUrl}.png`;
+    return `/logs/${filename}`;
   };
 
   const handleSave = () => {
@@ -130,7 +132,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
     }
 
     if (category !== 'Filmes' && !imageUrl) {
-      onNotify('Nome longo do arquivo da imagem é obrigatório!', 'error');
+      onNotify('Nome da imagem é obrigatório!', 'error');
       return;
     }
 
