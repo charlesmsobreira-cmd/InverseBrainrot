@@ -1,9 +1,12 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 
 export function Hero() {
+  const { scrollY } = useScroll();
+  const yParallax = useTransform(scrollY, [0, 800], [0, 350]);
+
   return (
     <section className="relative w-full min-h-[80vh] flex items-center justify-start pt-20 px-4 md:px-0 overflow-hidden">
       <div 
@@ -33,9 +36,25 @@ export function Hero() {
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: false, amount: 0.1 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col gap-8 items-center"
+            className="flex flex-col gap-8 items-center relative z-20"
           >
-            <h1 className="text-7xl md:text-9xl lg:text-[11rem] font-bold tracking-tighter leading-[0.8] text-transparent bg-clip-text bg-gradient-to-br from-titanium-100 via-titanium-100 to-azure-500 pb-4">
+            {/* Angel Figure Parallax Wrapper */}
+            <motion.div style={{ y: yParallax }} className="relative z-0 -mb-16 md:-mb-24 lg:-mb-32 flex justify-center w-full pointer-events-none">
+              <motion.img 
+                initial={{ y: -100, opacity: 0, rotate: -2 }}
+                animate={{ y: 0, opacity: 1, rotate: 2 }}
+                transition={{ 
+                  y: { duration: 2, ease: "easeOut" }, 
+                  opacity: { duration: 2 }, 
+                  rotate: { duration: 5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } 
+                }}
+                src="/icarus.png" 
+                alt="Charles Brain OS Angel" 
+                className="w-56 md:w-80 lg:w-[450px] object-contain mix-blend-multiply opacity-95"
+              />
+            </motion.div>
+
+            <h1 className="relative z-10 text-7xl md:text-9xl lg:text-[11rem] font-bold tracking-tighter leading-[0.8] text-transparent bg-clip-text bg-gradient-to-br from-titanium-100 via-titanium-100 to-azure-500 pb-4">
               Charles <br />
               Brain OS.
             </h1>
