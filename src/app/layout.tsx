@@ -11,6 +11,9 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Brain OS",
   description: "Personal Second Brain System",
+  icons: {
+    icon: "/cbos.png",
+  },
 };
 
 export default function RootLayout({
