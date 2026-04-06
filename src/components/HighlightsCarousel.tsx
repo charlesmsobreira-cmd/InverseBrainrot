@@ -184,7 +184,12 @@ export function HighlightsCarousel() {
         ref={scrollRef}
         className="flex gap-8 overflow-x-auto px-6 md:px-[calc((100vw-1400px)/2+48px)] no-scrollbar pb-32 pt-8 snap-x snap-mandatory scroll-smooth"
       >
-        {highlights.map((item, index) => (
+        {highlights.map((item, index) => {
+          const rotations = [-2.5, 1.8, -1.2, 3.0, -0.7, 2.3, -3.2, 1.0, -1.8, 2.7];
+          const offsets   = [6, -4, 8, -2, 10, 0, -6, 4, -10, 2];
+          const rot = rotations[index % rotations.length];
+          const oy  = offsets[index % offsets.length];
+          return (
           <motion.div
             key={item.id}
             initial={{ opacity: 0, x: 50 }}
@@ -192,6 +197,7 @@ export function HighlightsCarousel() {
             viewport={{ once: false }}
             transition={{ delay: index * 0.1, duration: 0.8 }}
             className="flex-shrink-0 w-[320px] md:w-[450px] snap-center group relative pt-4"
+            style={{ marginTop: `${oy}px` }}
           >
             {/* Delete Button */}
             <button 
@@ -202,7 +208,12 @@ export function HighlightsCarousel() {
             </button>
 
             {/* Polaroid Container */}
-            <div className="bg-white p-6 md:p-8 md:pb-24 pb-20 shadow-[0_30px_80px_rgba(0,0,0,0.12)] rounded-sm rotate-1 group-hover:rotate-0 transition-transform duration-500 border border-black/[0.03]">
+            <div 
+              className="bg-white p-6 md:p-8 md:pb-24 pb-20 shadow-[0_30px_80px_rgba(0,0,0,0.12)] rounded-sm transition-transform duration-500 border border-black/[0.03]"
+              style={{ transform: `rotate(${rot}deg)` }}
+              onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg)'}
+              onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg)`}
+            >
                <div className="relative aspect-[4/5] overflow-hidden mb-8 bg-gray-100 shadow-inner">
                   <img 
                     src={item.imageUrl} 
@@ -252,7 +263,8 @@ export function HighlightsCarousel() {
                </div>
             </div>
           </motion.div>
-        ))}
+          );
+        })}
 
         {highlights.length === 0 && (
           <div className="w-full py-20 flex flex-col items-center justify-center opacity-20 border-2 border-dashed border-black/10 rounded-3xl mx-6">
