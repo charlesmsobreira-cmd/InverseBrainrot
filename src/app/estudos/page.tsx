@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, BookOpen, Cards, Compass } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function StudyPage() {
   const [hovered, setHovered] = useState<'none' | 'diversos' | 'flashcards'>('none');
+  const router = useRouter();
 
   return (
     <main className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] p-6 md:p-12 overflow-hidden flex flex-col">
@@ -37,6 +39,7 @@ export default function StudyPage() {
           
           {/* Estudos Diversos */}
           <motion.div 
+            onClick={() => router.push('/estudos/diversos')}
             onHoverStart={() => setHovered('diversos')}
             onHoverEnd={() => setHovered('none')}
             animate={{ 
@@ -69,6 +72,7 @@ export default function StudyPage() {
 
           {/* Flashcards */}
           <motion.div 
+            onClick={() => router.push('/estudos/flashcards')}
             onHoverStart={() => setHovered('flashcards')}
             onHoverEnd={() => setHovered('none')}
             animate={{ 
