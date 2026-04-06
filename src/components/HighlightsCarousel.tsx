@@ -182,7 +182,7 @@ export function HighlightsCarousel() {
 
       <div 
         ref={scrollRef}
-        className="flex gap-8 overflow-x-auto px-6 md:px-[calc((100vw-1400px)/2+48px)] no-scrollbar pb-32 pt-8 snap-x snap-mandatory scroll-smooth"
+        className="flex gap-8 overflow-x-auto px-6 md:px-12 no-scrollbar pb-32 pt-8 snap-x snap-mandatory scroll-smooth"
       >
         {highlights.map((item, index) => {
           const rotations = [-2.5, 1.8, -1.2, 3.0, -0.7, 2.3, -3.2, 1.0, -1.8, 2.7];
