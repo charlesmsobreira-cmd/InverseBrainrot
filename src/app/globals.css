@@ -40,6 +40,15 @@
 }
 
 @layer utilities {
+  /* Ocultar barra de rolagem horizontal */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
   .glass-panel {
     @apply bg-white/70 backdrop-blur-xl border border-black/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.04)];
   }
