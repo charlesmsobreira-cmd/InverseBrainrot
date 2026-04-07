@@ -188,7 +188,7 @@ export default function DiversosPage() {
 
               <div className="flex-1 overflow-hidden px-6 md:px-8 pb-8 flex flex-col">
                 <textarea 
-                  className="w-full h-full bg-white border border-black/5 rounded-3xl p-8 focus:outline-none focus:ring-2 focus:ring-azure-500/50 resize-none font-mono text-base shadow-sm transition-all text-titanium-200 placeholder:text-titanium-400/50 leading-relaxed"
+                  className="w-full h-full bg-white border border-black/10 rounded-[2rem] p-8 focus:outline-none focus:border-azure-500 focus:ring-4 focus:ring-azure-500/10 resize-none font-mono text-base shadow-sm transition-all text-titanium-200 placeholder:text-titanium-400/50 leading-relaxed"
                   placeholder="Comece a digitar seus pensamentos, vocabulário novo ou rascunhos aqui..."
                   value={activePage.notes}
                   onChange={(e) => updateActivePageNotes(e.target.value)}

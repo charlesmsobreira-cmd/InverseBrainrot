@@ -2,8 +2,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Coffee, CurrencyDollar, CheckCircle, ArrowRight, X, Sparkle, MusicNotes, BookmarkSimple, FilmStrip } from '@phosphor-icons/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 // --- Interfaces ---
 interface Recommendation {
@@ -154,27 +155,45 @@ function RoutineSection() {
 
 // 2. Study Section
 function StudySection() {
+  const [hours, setHours] = useState(0);
+
+  const loadStats = useCallback(async () => {
+    const { data } = await supabase.from('study_stats').select('total_minutes').eq('category', 'Italiano').single();
+    if (data) {
+      setHours(Math.floor(data.total_minutes / 60));
+    }
+  }, []);
+
+  useEffect(() => {
+    loadStats();
+    // Refresh every minute to stay accurate if timer is running elsewhere
+    const interval = setInterval(loadStats, 60000);
+    return () => clearInterval(interval);
+  }, [loadStats]);
+
   return (
     <section id="estudos" className="w-full bg-titanium-700 py-32 border-b border-black/[0.05] relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
         <div className="order-2 md:order-1 relative flex justify-center">
           <div className="absolute inset-0 bg-azure-500/5 blur-[100px] opacity-40 rounded-full pointer-events-none" />
           
-          {/* Liquid Glass Card */}
-          <motion.div 
-            whileHover={{ y: -10, scale: 1.02 }} 
-            className="w-full max-w-sm aspect-square flex flex-col items-center justify-center group text-center rounded-[2.5rem] relative overflow-hidden bg-white/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/70 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9),inset_0_-1px_1px_rgba(0,0,0,0.02)] before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/40 before:via-white/5 before:to-transparent before:opacity-80 before:pointer-events-none"
-          >
-            <div className="relative z-10 flex flex-col items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="w-32 h-auto mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 filter drop-shadow-md rounded-2xl overflow-hidden shadow-sm border border-black/5">
-                <rect width="1" height="2" fill="#009246"/>
-                <rect x="1" width="1" height="2" fill="#FFFFFF"/>
-                <rect x="2" width="1" height="2" fill="#CE2B37"/>
-              </svg>
-              <h3 className="text-4xl font-bold text-titanium-100 mb-3 group-hover:text-azure-600 transition-colors tracking-tight">Italiano</h3>
-              <p className="text-titanium-400 font-mono text-lg">2 Horas restantes</p>
-            </div>
-          </motion.div>
+          <Link href="/estudos/flashcards" className="w-full max-w-sm">
+            {/* Liquid Glass Card */}
+            <motion.div 
+              whileHover={{ y: -10, scale: 1.02 }} 
+              className="w-full aspect-square flex flex-col items-center justify-center group text-center rounded-[2.5rem] relative overflow-hidden bg-white/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/70 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9),inset_0_-1px_1px_rgba(0,0,0,0.02)] before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/40 before:via-white/5 before:to-transparent before:opacity-80 before:pointer-events-none"
+            >
+              <div className="relative z-10 flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="w-32 h-auto mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 filter drop-shadow-md rounded-2xl overflow-hidden shadow-sm border border-black/5">
+                  <rect width="1" height="2" fill="#009246"/>
+                  <rect x="1" width="1" height="2" fill="#FFFFFF"/>
+                  <rect x="2" width="1" height="2" fill="#CE2B37"/>
+                </svg>
+                <h3 className="text-4xl font-bold text-titanium-100 mb-3 group-hover:text-azure-600 transition-colors tracking-tight">Italiano</h3>
+                <p className="text-titanium-400 font-mono text-lg">{hours} Horas estudadas</p>
+              </div>
+            </motion.div>
+          </Link>
         </div>
         <div className="order-1 md:order-2 z-10 flex flex-col md:items-end md:text-right">
           <motion.h2 initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Foco & Estudos</motion.h2>

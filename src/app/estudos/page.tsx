@@ -25,14 +25,8 @@ export default function StudyPage() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="flex-1 flex flex-col relative z-10 w-full max-w-[1600px] mx-auto h-full"
+        className="flex-1 flex flex-col justify-center relative z-10 w-full max-w-[1400px] mx-auto h-full"
       >
-        <div className="flex items-center gap-4 text-azure-500 mb-8 pl-4">
-          <BookOpen size={40} weight="duotone" />
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-titanium-100">
-            Foco & Estudos
-          </h1>
-        </div>
         
         {/* 50/50 Split Container */}
         <div className="flex-1 flex flex-col md:flex-row gap-6 w-full min-h-[70vh]">
