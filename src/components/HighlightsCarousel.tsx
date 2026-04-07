@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { CaretLeft, CaretRight, Trophy, X, Warning, Star, Heart } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, Trophy, X, Warning, Star, StarHalf, Heart } from '@phosphor-icons/react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -230,9 +230,9 @@ export function HighlightsCarousel() {
                </div>
                
                <div className="px-2 text-left relative min-h-[100px]">
-                  <h3 className="text-4xl md:text-5xl font-serif italic tracking-tighter text-black/90 mb-2 leading-none uppercase">
-                    {item.title}
-                  </h3>
+                  {(() => { const len = item.title.length; const sz = len > 18 ? `text-2xl md:text-3xl leading-tight` : len > 12 ? `text-3xl md:text-4xl leading-snug` : `text-4xl md:text-5xl leading-none`; const cls = sz + ' font-serif italic tracking-tighter text-black/90 mb-2 uppercase'; return <h3 className={cls}>{item.title}</h3>; })()}
+
+
                   
                   {item.subtitle && (
                     <p className="text-xl md:text-2xl font-bold tracking-tight text-black/60 mb-3 opacity-90">
@@ -249,9 +249,12 @@ export function HighlightsCarousel() {
                   
                   {/* Rating Stars Row */}
                   <div className="flex gap-1 text-black/20">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} size={14} weight="fill" className={ (item.rating || 0) >= s ? "text-azure-500" : "opacity-20"} />
-                    ))}
+                    {[1,2,3,4,5].map(s => {
+                      const r = item.rating || 0;
+                      if (r >= s)       return <Star     key={s} size={14} weight="fill" className="text-azure-500" />;
+                      if (r >= s - 0.5) return <StarHalf key={s} size={14} weight="fill" className="text-azure-500" />;
+                      return              <Star     key={s} size={14} weight="fill" className="opacity-20" />;
+                    })}
                   </div>
 
                   {/* Like Badge */}

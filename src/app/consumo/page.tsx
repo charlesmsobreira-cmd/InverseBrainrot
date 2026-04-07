@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, Star, Heart, CheckCircle, WarningCircle, ListBullets } from '@phosphor-icons/react';
+import { ArrowLeft, X, Star, StarHalf, Heart, CheckCircle, WarningCircle, ListBullets } from '@phosphor-icons/react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -87,25 +87,33 @@ const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
   if (filtered.length === 0) return null;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-10 w-full max-w-xs"
-    >
-      <ul className="space-y-3">
-        {filtered.map((item, index) => (
-          <motion.li 
-            key={item.id}
-            initial={{ opacity: 0, x: -5 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`text-sm md:text-base font-bold tracking-tight border-b pb-2 ${textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'}`}
+    <ul className="space-y-0 w-full max-w-xs mb-10">
+      {filtered.map((item, index) => (
+        <motion.li
+          key={item.id}
+          initial={{ opacity: 0, y: 22, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{
+            delay: 0.3 + index * 0.18,
+            duration: 0.55,
+            ease: [0.16, 1, 0.3, 1]
+          }}
+          className={`flex items-center gap-3 py-3 border-b text-sm md:text-base font-bold tracking-tight ${
+            textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'
+          }`}
+        >
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            transition={{ delay: 0.3 + index * 0.18 + 0.2 }}
+            className="font-mono text-[10px] w-4 shrink-0"
           >
-            {item.title}
-          </motion.li>
-        ))}
-      </ul>
-    </motion.div>
+            {index + 1}
+          </motion.span>
+          {item.title}
+        </motion.li>
+      ))}
+    </ul>
   );
 };
 
@@ -116,6 +124,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
   const [review, setReview] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
 
   const getPreviewUrl = () => {
@@ -212,8 +221,38 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
               <div className="flex items-center gap-8 py-2 border-y border-white/5">
                  <div className="space-y-2">
                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Avaliação</label>
-                   <div className="flex gap-1 text-azure-500">
-                     {[1,2,3,4,5].map(s => <button key={s} onClick={() => setRating(s)} className={`transition-all ${rating >= s ? 'opacity-100 scale-110' : 'opacity-20 hover:opacity-50'}`}><Star size={20} weight={rating >= s ? "fill" : "bold"} /></button>)}
+                   <div className="flex gap-0.5 text-azure-500 items-center">
+                     {[1,2,3,4,5].map(s => {
+                       const display = hoverRating || rating;
+                       const half = s - 0.5;
+                       const isFull = display >= s;
+                       const isHalf = !isFull && display >= half;
+                       return (
+                         <div key={s} className="relative w-5 h-5 cursor-pointer">
+                           {/* Left half = 0.5 */}
+                           <div
+                             className="absolute left-0 top-0 w-1/2 h-full z-10"
+                             onMouseEnter={() => setHoverRating(half)}
+                             onMouseLeave={() => setHoverRating(0)}
+                             onClick={() => setRating(rating === half ? 0 : half)}
+                           />
+                           {/* Right half = full */}
+                           <div
+                             className="absolute right-0 top-0 w-1/2 h-full z-10"
+                             onMouseEnter={() => setHoverRating(s)}
+                             onMouseLeave={() => setHoverRating(0)}
+                             onClick={() => setRating(rating === s ? 0 : s)}
+                           />
+                           {/* Icon */}
+                           {isFull  ? <Star     size={20} weight="fill" className="text-azure-500" /> :
+                            isHalf  ? <StarHalf size={20} weight="fill" className="text-azure-500" /> :
+                                      <Star     size={20} weight="bold"  className="opacity-20" />}
+                         </div>
+                       );
+                     })}
+                     {(hoverRating || rating) > 0 && (
+                       <span className="ml-1 text-[10px] font-mono text-azure-400 opacity-70">{hoverRating || rating}</span>
+                     )}
                    </div>
                  </div>
                  <div className="space-y-2">
