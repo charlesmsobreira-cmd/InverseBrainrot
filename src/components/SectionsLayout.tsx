@@ -221,8 +221,9 @@ function ConsumeSection() {
   const [currentRec, setCurrentRec] = useState<Recommendation | null>(null);
 
   const handleOpenModal = () => {
-    // Daily seed logic: Same recommendation for the whole day
-    const today = new Date().toISOString().slice(0, 10);
+    // Daily seed logic: Same recommendation for the whole day (Local Time)
+    const now = new Date();
+    const today = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
     let seed = 0;
     for (let i = 0; i < today.length; i++) seed += today.charCodeAt(i);
     

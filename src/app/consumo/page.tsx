@@ -87,31 +87,16 @@ const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
   if (filtered.length === 0) return null;
 
   return (
-    <ul className="space-y-0 w-full max-w-xs mb-10">
-      {filtered.map((item, index) => (
-        <motion.li
+    <ul className="flex flex-col items-center w-full max-w-sm mb-8">
+      {filtered.map((item) => (
+        <li
           key={item.id}
-          initial={{ opacity: 0, y: 22, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{
-            delay: 0.3 + index * 0.18,
-            duration: 0.55,
-            ease: [0.16, 1, 0.3, 1]
-          }}
-          className={`flex items-center gap-3 py-3 border-b text-sm md:text-base font-bold tracking-tight ${
+          className={`w-full py-2.5 border-b text-center text-sm md:text-base font-bold tracking-tight last:border-0 ${
             textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'
           }`}
         >
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.3 }}
-            transition={{ delay: 0.3 + index * 0.18 + 0.2 }}
-            className="font-mono text-[10px] w-4 shrink-0"
-          >
-            {index + 1}
-          </motion.span>
           {item.title}
-        </motion.li>
+        </li>
       ))}
     </ul>
   );
@@ -297,17 +282,19 @@ const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, rev
     <div className={`max-w-[1400px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center ${reverse ? 'md:flex-row-reverse' : ''}`}>
       <div className="flex flex-col items-center text-center w-full">
          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="flex flex-col items-center w-full">
-           <h2 className="text-6xl md:text-9xl font-black tracking-tighter leading-none mb-4">{title}</h2>
-           <div className="w-full max-w-xs border-t border-current pt-4 opacity-80 mb-12 flex flex-col items-center">
+           <h2 className="text-6xl md:text-9xl font-black tracking-tighter leading-none mb-4 uppercase">{title}</h2>
+           <div className="w-full max-w-xs border-t border-current pt-4 opacity-80 mb-6 flex flex-col items-center">
              <p className="text-2xl md:text-3xl font-light tracking-[0.3em] uppercase">{subtitle}</p>
            </div>
            
-           <FavoriteList logs={logs} category={title} textColor={textColor} />
+           <div className="w-full flex flex-col items-center min-h-[260px] justify-center">
+             <FavoriteList logs={logs} category={title} textColor={textColor} />
+           </div>
 
            <motion.button
              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
              onClick={() => onOpenModal(title)}
-             className={`px-12 py-4 rounded-full font-bold uppercase tracking-widest text-xs border ${textColor === 'text-white' ? 'border-white/30 hover:bg-white hover:text-black' : 'border-black/30 hover:bg-black hover:text-white'} transition-all mt-4`}
+             className={`px-12 py-4 rounded-full font-bold uppercase tracking-widest text-[10px] border ${textColor === 'text-white' ? 'border-white/30 hover:bg-white hover:text-black' : 'border-black/30 hover:bg-black hover:text-white'} transition-all`}
            >
              REGISTRAR
            </motion.button>
