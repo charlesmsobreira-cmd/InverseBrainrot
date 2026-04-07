@@ -31,9 +31,16 @@ export default function FinancePage() {
   
   // -- Finance State --
   const [patrimonio, setPatrimonio] = useState(14290.55);
-  const [spent, setSpent] = useState(3250.00);
   const [limit, setLimit] = useState(5000.00);
   
+  const [expenses, setExpenses] = useState<{id: string, label: string, value: number}[]>([
+    { id: '1', label: 'Assinatura Adobe', value: 120.00 },
+    { id: '2', label: 'Almoço Executivo', value: 65.00 },
+    { id: '3', label: 'Host & Vercel', value: 45.00 },
+  ]);
+  const [expenseName, setExpenseName] = useState('');
+  const [expenseValue, setExpenseValue] = useState('');
+
   // -- UI State --
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -47,23 +54,39 @@ export default function FinancePage() {
     const seed = now.getFullYear() + now.getMonth() + now.getDate();
     setQuote(financeQuotes[seed % financeQuotes.length]);
 
-    const savedData = localStorage.getItem('finance_data_v2');
+    const savedData = localStorage.getItem('finance_data_v3');
     if (savedData) {
       const parsed = JSON.parse(savedData);
-      setPatrimonio(parsed.patrimonio);
-      setSpent(parsed.spent || 3250.00);
+      setPatrimonio(parsed.patrimonio || 14290.55);
       setLimit(parsed.limit || 5000.00);
+      if (parsed.expenses) setExpenses(parsed.expenses);
     }
 
     return () => { document.body.style.backgroundColor = ''; };
   }, []);
 
-  const saveFinanceData = () => {
-    localStorage.setItem('finance_data_v2', JSON.stringify({ patrimonio, spent, limit }));
-    setIsEditing(false);
+  useEffect(() => {
+    localStorage.setItem('finance_data_v3', JSON.stringify({ patrimonio, limit, expenses }));
+  }, [patrimonio, limit, expenses]);
+
+  const addExpense = () => {
+    if (!expenseName || !expenseValue) return;
+    const newExpense = {
+      id: Math.random().toString(36).substr(2, 9),
+      label: expenseName,
+      value: parseFloat(expenseValue)
+    };
+    setExpenses([...expenses, newExpense]);
+    setExpenseName('');
+    setExpenseValue('');
+  };
+
+  const removeExpense = (id: string) => {
+    setExpenses(expenses.filter(e => e.id !== id));
   };
 
   // -- Calculations --
+  const spent = expenses.reduce((acc, curr) => acc + curr.value, 0);
   const spentPercentage = Math.min((spent / (limit || 1)) * 100, 100);
   const remaining = Math.max(limit - spent, 0);
 
@@ -103,52 +126,72 @@ export default function FinancePage() {
       {/* --- Royal Dashboard Grid --- */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-[1400px] mx-auto relative z-10">
         
-        {/* Row 1: Total Assets & Expense Control */}
-        {/* Main Growth Card */}
+        {/* Row 1: Expense Catalog & Limit Tracking */}
+        {/* Expense Catalog Card (Replaced Investment) */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="md:col-span-8 bg-white/3 border border-white/10 rounded-[3rem] p-10 shadow-2xl relative backdrop-blur-md h-[400px] flex flex-col justify-between"
+          className="md:col-span-8 bg-white/3 border border-white/10 rounded-[3rem] p-10 shadow-2xl relative backdrop-blur-md h-[480px] flex flex-col"
         >
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Diamond size={12} weight="fill" className="text-white/40" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 block">Total em Investimentos</span>
-              </div>
-              {isEditing ? (
-                <input 
-                  type="number" step="0.01" value={patrimonio} onChange={e => setPatrimonio(parseFloat(e.target.value))}
-                  className="bg-white/5 border-b border-white text-4xl font-black text-white font-mono outline-none w-full max-w-sm mt-2" 
-                />
-              ) : (
-                <div className="flex items-baseline gap-3">
-                  <h3 className="text-4xl font-black text-white font-mono tracking-tighter">
-                    {patrimonio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </h3>
-                  <div className="flex items-center gap-1 text-white text-[10px] font-bold uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
-                    <TrendUp size={12} weight="bold" /> +12.4%
-                  </div>
-                </div>
-              )}
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-3">
+              <Receipt size={24} className="text-white/40" />
+              <h3 className="text-2xl font-black uppercase tracking-tighter text-white">Controle de Gastos</h3>
             </div>
+            <div className="text-right">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 block mb-1">Total Mensal</span>
+              <span className="text-2xl font-mono font-bold text-white">
+                {spent.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Add Form */}
+          <div className="flex gap-4 mb-8">
+            <input 
+              placeholder="Nome" value={expenseName} onChange={e => setExpenseName(e.target.value)}
+              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm outline-none focus:border-white/30 transition-all font-bold"
+            />
+            <input 
+              type="number" placeholder="R$ 0,00" value={expenseValue} onChange={e => setExpenseValue(e.target.value)}
+              className="w-32 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm outline-none focus:border-white/30 transition-all font-mono font-bold"
+            />
             <button 
-              onClick={() => setIsExpanded(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 text-white/40 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 hover:text-white transition-colors"
+              onClick={addExpense}
+              className="p-4 bg-white text-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg"
             >
-              <MagnifyingGlass size={16} weight="bold" /> Gráfico Anual
+              <PlusCircle size={24} weight="fill" />
             </button>
           </div>
 
-          <div className="h-44 w-full flex items-end relative overflow-visible">
-            <svg viewBox="0 0 800 150" className="w-full h-full overflow-visible">
-              <motion.path
-                d="M0,140 C100,120 150,145 250,100 C350,55 400,80 500,50 C600,20 650,35 800,10"
-                fill="none" stroke="white" strokeWidth="5" strokeLinecap="round"
-                initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2 }}
-              />
-              <motion.circle cx="800" cy="10" r="10" fill="white" />
-            </svg>
+          {/* Scrolling Expense List */}
+          <div className="flex-1 overflow-y-auto pr-4 space-y-3 custom-scrollbar">
+            {expenses.map(exp => (
+              <motion.div 
+                layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                key={exp.id} 
+                className="flex items-center justify-between p-5 bg-white/5 border border-white/5 rounded-2xl group hover:border-white/10 transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 rounded-full bg-white/20 group-hover:bg-white transition-colors" />
+                  <span className="text-sm font-bold text-white/80">{exp.label}</span>
+                </div>
+                <div className="flex items-center gap-6">
+                  <span className="font-mono text-sm font-black text-white">
+                    {exp.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                  <button onClick={() => removeExpense(exp.id)} className="opacity-0 group-hover:opacity-40 hover:opacity-100 text-white transition-all">
+                    <X size={16} weight="bold" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+            {expenses.length === 0 && (
+              <div className="h-full flex flex-col items-center justify-center text-white/20">
+                <Receipt size={48} weight="thin" className="mb-4" />
+                <p className="text-xs uppercase font-black tracking-[0.3em]">Nenhum gasto catalogado</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -156,12 +199,12 @@ export default function FinancePage() {
         <motion.div 
           initial={{ opacity: 0, x: 30 }}
           whileInView={{ opacity: 1, x: 0 }}
-          className="md:col-span-4 bg-[#1A1A1B] border border-white/10 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden flex flex-col justify-between h-[400px]"
+          className="md:col-span-4 bg-[#1A1A1B] border border-white/10 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden flex flex-col justify-between h-[480px]"
         >
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 block">Limite</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 block">Limite Mensal</span>
               </div>
               {isEditing ? (
                 <input 
@@ -169,16 +212,18 @@ export default function FinancePage() {
                   className="bg-white/5 border-b border-white text-3xl font-black text-white font-mono outline-none w-full" 
                 />
               ) : (
-                <div className="text-3xl font-black font-mono tracking-tighter text-white">
+                <div className="text-3xl font-black font-mono tracking-tighter text-white" onClick={() => setIsEditing(true)}>
                   {limit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </div>
               )}
             </div>
             {isEditing && (
-              <div className="flex gap-2">
-                <button onClick={() => setSpent(prev => Math.max(prev - 100, 0))} className="text-white/20 hover:text-white"><MinusCircle size={20} /></button>
-                <button onClick={() => setSpent(prev => prev + 100)} className="text-white hover:scale-110 transition-transform"><PlusCircle size={20} /></button>
-              </div>
+              <button 
+                onClick={() => setIsEditing(false)}
+                className="p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all"
+              >
+                <Check size={20} weight="bold" />
+              </button>
             )}
           </div>
 
@@ -325,7 +370,46 @@ export default function FinancePage() {
           </div>
         </motion.div>
 
-        {/* Row 4: Decorative Divider */}
+        {/* Row 4: Final Investment Evolution (Purely Visual) */}
+        <FullWidthDivider />
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="md:col-span-12 w-full py-20 flex flex-col"
+        >
+          <div className="flex flex-col items-center mb-12">
+            <div className="flex items-center gap-2 opacity-40 mb-3">
+              <Diamond size={16} weight="fill" />
+              <span className="text-[11px] font-black uppercase tracking-[0.4em]">Evolução Patrimonial</span>
+            </div>
+            {isEditing ? (
+              <input 
+                type="number" step="0.01" value={patrimonio} onChange={e => setPatrimonio(parseFloat(e.target.value))}
+                className="bg-white/5 border-b border-white text-6xl font-black text-white font-mono outline-none text-center max-w-xl" 
+              />
+            ) : (
+              <h3 className="text-6xl font-black text-white font-mono tracking-tighter" onClick={() => setIsEditing(true)}>
+                {patrimonio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </h3>
+            )}
+          </div>
+
+          <div className="h-64 w-full flex items-end relative overflow-visible opacity-50 brightness-150">
+            <svg viewBox="0 0 1400 200" className="w-full h-full overflow-visible">
+              <motion.path
+                d="M0,180 C200,160 300,190 500,140 C700,90 800,110 1000,70 C1200,30 1300,50 1400,10"
+                fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"
+                initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 3, ease: "easeInOut" }}
+              />
+              <motion.circle 
+                initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 2.5 }}
+                cx="1400" cy="10" r="6" fill="white" 
+              />
+            </svg>
+          </div>
+        </motion.div>
+
+        {/* Row 5: Decorative Divider */}
         <FullWidthDivider />
         <div className="md:col-span-12 py-10 flex flex-col items-center gap-8">
            <div className="h-px w-32 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
@@ -402,6 +486,26 @@ export default function FinancePage() {
         }
         .animate-spin-slow {
           animation: spin-slow 20s linear infinite;
+        }
+        /* Custom scrollbar for long lists */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+        /* Hide number input spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
         }
       `}</style>
     </main>
