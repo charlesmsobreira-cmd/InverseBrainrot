@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Hourglass, WarningCircle, List, Clock, CalendarBlank, CaretUp, CaretDown } from '@phosphor-icons/react';
 import { supabase } from '@/lib/supabase';
+import { useStudyMode } from '@/context/StudyModeContext';
 
 const MAX_SESSION_MINUTES = 180; // 3 Hours
 
@@ -22,6 +23,7 @@ export default function StudyTimer() {
   const [showNotification, setShowNotification] = useState<string | null>(null);
   const [logs, setLogs] = useState<StudyLog[]>([]);
   const [showLogs, setShowLogs] = useState(false);
+  const { setIsImmersive } = useStudyMode();
 
   // Load initial state and logs from Supabase
   const loadInitialData = useCallback(async () => {
@@ -46,6 +48,7 @@ export default function StudyTimer() {
           setIsRunning(true);
           setStartTime(started);
           setSessionSeconds(diffSeconds);
+          setIsImmersive(true);
         }
       }
     }
@@ -94,6 +97,7 @@ export default function StudyTimer() {
       setStartTime(Date.now());
       setIsRunning(true);
       setSessionSeconds(0);
+      setIsImmersive(true);
     }
     setIsSyncing(false);
   };
@@ -132,6 +136,7 @@ export default function StudyTimer() {
       setStartTime(null);
       setTotalMinutes(newTotal);
       setSessionSeconds(0);
+      setIsImmersive(false);
       if (isAuto) {
         setShowNotification("Sessão finalizada automaticamente (Limite 3h)");
         setTimeout(() => setShowNotification(null), 5000);

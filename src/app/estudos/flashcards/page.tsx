@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Cards, CheckCircle } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useStudyMode } from '@/context/StudyModeContext';
 
 // Flashcards de Italiano Básico
 const fallbackCards = [
@@ -26,6 +27,7 @@ export default function FlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [sessionFinished, setSessionFinished] = useState(false);
+  const { isImmersive } = useStudyMode();
 
   const flipCard = () => {
     if (!isFlipped) setIsFlipped(true);
@@ -52,7 +54,9 @@ export default function FlashcardsPage() {
   const currentCard = deck[currentIndex];
 
   return (
-    <main className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] p-8 md:p-12 overflow-hidden flex flex-col relative">
+    <main className={`min-h-screen p-8 md:p-12 overflow-hidden flex flex-col relative transition-colors duration-1000 ${
+      isImmersive ? 'bg-transparent text-[#F5F5F7]' : 'bg-transparent text-[#1D1D1F]'
+    }`}>
       
       {/* Background Graphic */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.02] pointer-events-none">
@@ -69,9 +73,11 @@ export default function FlashcardsPage() {
             <ArrowLeft size={20} /> Voltar
           </motion.button>
         </Link>
-        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-black/5">
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-sm border transition-colors duration-1000 ${
+          isImmersive ? 'bg-white/5 border-white/10' : 'bg-white border-black/5'
+        }`}>
           <Cards size={16} className="text-azure-500" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-titanium-400">
+          <span className={`text-[10px] font-bold uppercase tracking-widest ${isImmersive ? 'text-titanium-300' : 'text-titanium-400'}`}>
             Italiano Básico ({currentIndex + 1}/{deck.length})
           </span>
         </div>
@@ -83,11 +89,13 @@ export default function FlashcardsPage() {
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-12 rounded-[3rem] shadow-xl border border-black/5 text-center w-full"
+            className={`p-12 rounded-[3rem] shadow-xl border text-center w-full transition-colors duration-1000 ${
+              isImmersive ? 'bg-[#1A1A1B] border-white/10' : 'bg-white border-black/5'
+            }`}
           >
             <CheckCircle size={64} className="mx-auto text-emerald-500 mb-6" weight="duotone" />
-            <h2 className="text-4xl font-black uppercase tracking-tighter mb-4 text-titanium-100">Sessão Concluída!</h2>
-            <p className="text-titanium-400 mb-8">Você revisou todas as cartas do deck básico de Italiano por agora.</p>
+            <h2 className={`text-4xl font-black uppercase tracking-tighter mb-4 transition-colors duration-1000 ${isImmersive ? 'text-white' : 'text-titanium-100'}`}>Sessão Concluída!</h2>
+            <p className={`mb-8 transition-colors duration-1000 ${isImmersive ? 'text-titanium-400' : 'text-titanium-400'}`}>Você revisou todas as cartas do deck básico de Italiano por agora.</p>
             <button 
               onClick={restart}
               className="px-8 py-4 bg-azure-500 text-white rounded-full font-bold uppercase tracking-widest text-sm hover:bg-azure-600 transition-colors w-full shadow-lg shadow-azure-500/30"

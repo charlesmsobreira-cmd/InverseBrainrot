@@ -5,13 +5,17 @@ import { ArrowLeft, BookOpen, Cards, Compass } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useStudyMode } from '@/context/StudyModeContext';
 
 export default function StudyPage() {
   const [hovered, setHovered] = useState<'none' | 'diversos' | 'flashcards'>('none');
   const router = useRouter();
+  const { isImmersive } = useStudyMode();
 
   return (
-    <main className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] p-6 md:p-12 overflow-hidden flex flex-col">
+    <main className={`min-h-screen p-6 md:p-12 overflow-hidden flex flex-col transition-colors duration-1000 ${
+      isImmersive ? 'bg-transparent text-[#F5F5F7]' : 'bg-transparent text-[#1D1D1F]'
+    }`}>
       <Link href="/">
         <motion.button 
           whileHover={{ x: -5 }}
@@ -73,8 +77,10 @@ export default function StudyPage() {
               flex: hovered === 'flashcards' ? 1.6 : (hovered === 'diversos' ? 0.7 : 1),
             }}
             transition={{ type: 'spring', bounce: 0.1, duration: 0.6 }}
-            className={`cursor-pointer rounded-[3rem] p-8 md:p-16 flex flex-col justify-end relative overflow-hidden transition-colors duration-500 ${
-              hovered === 'flashcards' ? 'bg-titanium-100 text-white shadow-2xl shadow-black/20 border-transparent' : 'bg-black/[0.04] text-titanium-100 border border-black/10 hover:border-black/20'
+            className={`cursor-pointer rounded-[3rem] p-8 md:p-16 flex flex-col justify-end relative overflow-hidden transition-all duration-500 ${
+              hovered === 'flashcards' 
+                ? 'bg-titanium-100 text-white shadow-2xl shadow-black/20 border-transparent' 
+                : (isImmersive ? 'bg-white/[0.05] text-titanium-300 border border-white/10' : 'bg-black/[0.04] text-titanium-100 border border-black/10 hover:border-black/20')
             }`}
           >
             <div className="absolute top-10 left-10">
