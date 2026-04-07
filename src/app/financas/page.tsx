@@ -295,10 +295,10 @@ export default function FinancePage() {
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {[
-                  { label: "Equities", val: "45%", color: "bg-white" },
-                  { label: "Fixed Income", val: "30%", color: "bg-white/40" },
-                  { label: "Alternatives", val: "15%", color: "bg-white/20" },
-                  { label: "Liquidity", val: "10%", color: "bg-white/10" }
+                  { label: "Equities", val: "45%", color: "#FFFFFF" },
+                  { label: "Fixed Income", val: "30%", color: "#A5C4D4" },
+                  { label: "Alternatives", val: "15%", color: "#84A59D" },
+                  { label: "Liquidity", val: "10%", color: "#6B705C" }
                 ].map((item, idx) => (
                   <div key={idx} className="space-y-2">
                     <div className="flex justify-between items-end">
@@ -309,7 +309,8 @@ export default function FinancePage() {
                       <motion.div 
                         initial={{ width: 0 }}
                         whileInView={{ width: item.val }}
-                        className={`h-full ${item.color}`}
+                        style={{ backgroundColor: item.color }}
+                        className="h-full"
                       />
                     </div>
                   </div>
@@ -345,15 +346,15 @@ export default function FinancePage() {
                    />
                    {/* Slice 2: 30% */}
                    <circle 
-                     cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.4)" strokeWidth="15" strokeDasharray="75.4 251.3" strokeDashoffset="-113.1" 
+                     cx="50" cy="50" r="40" fill="transparent" stroke="#A5C4D4" strokeWidth="15" strokeDasharray="75.4 251.3" strokeDashoffset="-113.1" 
                    />
                    {/* Slice 3: 15% */}
                    <circle 
-                     cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.2)" strokeWidth="15" strokeDasharray="37.7 251.3" strokeDashoffset="-188.5" 
+                     cx="50" cy="50" r="40" fill="transparent" stroke="#84A59D" strokeWidth="15" strokeDasharray="37.7 251.3" strokeDashoffset="-188.5" 
                    />
                    {/* Slice 4: 10% */}
                    <circle 
-                     cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="15" strokeDasharray="25.1 251.3" strokeDashoffset="-226.2" 
+                     cx="50" cy="50" r="40" fill="transparent" stroke="#6B705C" strokeWidth="15" strokeDasharray="25.1 251.3" strokeDashoffset="-226.2" 
                    />
                  </g>
                </svg>
