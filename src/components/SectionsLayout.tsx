@@ -217,12 +217,11 @@ function FinanceSection() {
         </div>
         <div className="relative">
           <div className="p-10 glass-panel rounded-3xl group">
-             <div className="flex justify-between items-start mb-8">
+             <div className="mb-8">
                <div>
                  <h3 className="text-xl font-semibold text-titanium-400 uppercase tracking-wider text-sm mb-1">Patrimônio Líquido</h3>
-                 <div className="text-5xl font-mono text-titanium-100 font-bold">$14,290.55</div>
+                 <div className="text-5xl font-mono text-titanium-100 font-bold">R$ 14.290,55</div>
                </div>
-               <CurrencyDollar size={40} className="text-azure-500" />
              </div>
              <div className="h-32 w-full flex items-end gap-3 mt-4 px-2">
                {[40, 25, 60, 45, 80, 50, 90, 75, 100].map((h, i) => <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} transition={{ type: 'spring', damping: 15, delay: i * 0.05 }} className="flex-1 bg-azure-500/10 rounded-t-sm hover:bg-azure-500 transition-colors" />)}
