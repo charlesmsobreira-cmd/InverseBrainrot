@@ -5,7 +5,7 @@ import {
   ArrowLeft, CurrencyDollar, TrendUp, ChartLineUp, Wallet, ArrowUpRight, 
   Quotes, Sparkle, Diamond, Crown, X, PencilSimple, Check, 
   MagnifyingGlass, Warning, ChartBar, Info, Receipt, PlusCircle, MinusCircle, 
-  Layout, PresentationChart
+  Layout, PresentationChart, ArrowRight
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -68,16 +68,16 @@ export default function FinancePage() {
   const remaining = Math.max(limit - spent, 0);
 
   return (
-    <main className="min-h-screen bg-[#0B0B0C] text-white/90 p-6 md:p-12 lg:p-20 relative selection:bg-[#D4AF37] selection:text-black">
+    <main className="min-h-screen bg-[#0B0B0C] text-white/90 p-6 md:p-12 lg:p-20 relative selection:bg-white selection:text-black">
       
-      {/* Royal Background Decor */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#D4AF37]/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+      {/* Visual Background Decor */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
       <div className="absolute bottom-1/2 left-0 w-[400px] h-[400px] bg-white/2 blur-[100px] rounded-full -translate-x-1/4 pointer-events-none" />
 
       {/* Navigation & Controls */}
       <div className="flex justify-between items-center mb-20 relative z-20">
         <Link href="/">
-          <motion.button whileHover={{ x: -5 }} className="flex items-center gap-2 text-[#D4AF37] font-bold uppercase tracking-widest text-[10px] hover:opacity-80 transition-opacity">
+          <motion.button whileHover={{ x: -5 }} className="flex items-center gap-2 text-white/40 font-bold uppercase tracking-widest text-[10px] hover:text-white transition-all">
             <ArrowLeft size={18} weight="bold" /> Voltar para o Sistema
           </motion.button>
         </Link>
@@ -86,17 +86,19 @@ export default function FinancePage() {
       {/* --- Atmospheric Quote Header --- */}
       <header className="flex flex-col items-center text-center mb-32 relative z-10 max-w-4xl mx-auto">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5 }} className="relative">
-          <Quotes size={80} weight="fill" className="text-[#D4AF37]/5 absolute -top-12 -left-12 rotate-[-10deg]" />
+          <Quotes size={80} weight="fill" className="text-white/5 absolute -top-12 -left-12 rotate-[-10deg]" />
           <p className="text-2xl md:text-3xl font-light italic leading-relaxed text-white/80 mb-8 block relative z-10">
             &quot;{quote.text}&quot;
           </p>
           <div className="flex items-center justify-center gap-4">
-            <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#D4AF37]/40" />
-            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-[#D4AF37] opacity-80">{quote.author}</span>
-            <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#D4AF37]/40" />
+            <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-white/20" />
+            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 opacity-80">{quote.author}</span>
+            <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-white/20" />
           </div>
         </motion.div>
       </header>
+
+      <FullWidthDivider />
 
       {/* --- Royal Dashboard Grid --- */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-[1400px] mx-auto relative z-10">
@@ -111,23 +113,28 @@ export default function FinancePage() {
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Diamond size={12} weight="fill" className="text-[#D4AF37]" />
+                <Diamond size={12} weight="fill" className="text-white/40" />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 block">Total em Investimentos</span>
               </div>
               {isEditing ? (
                 <input 
                   type="number" step="0.01" value={patrimonio} onChange={e => setPatrimonio(parseFloat(e.target.value))}
-                  className="bg-white/5 border-b border-[#D4AF37] text-4xl font-black text-white font-mono outline-none w-full max-w-sm mt-2" 
+                  className="bg-white/5 border-b border-white text-4xl font-black text-white font-mono outline-none w-full max-w-sm mt-2" 
                 />
               ) : (
-                <h3 className="text-4xl font-black text-white font-mono tracking-tighter">
-                  {patrimonio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </h3>
+                <div className="flex items-baseline gap-3">
+                  <h3 className="text-4xl font-black text-white font-mono tracking-tighter">
+                    {patrimonio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </h3>
+                  <div className="flex items-center gap-1 text-white text-[10px] font-bold uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+                    <TrendUp size={12} weight="bold" /> +12.4%
+                  </div>
+                </div>
               )}
             </div>
             <button 
               onClick={() => setIsExpanded(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#D4AF37]/20 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 text-white/40 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 hover:text-white transition-colors"
             >
               <MagnifyingGlass size={16} weight="bold" /> Gráfico Anual
             </button>
@@ -137,10 +144,10 @@ export default function FinancePage() {
             <svg viewBox="0 0 800 150" className="w-full h-full overflow-visible">
               <motion.path
                 d="M0,140 C100,120 150,145 250,100 C350,55 400,80 500,50 C600,20 650,35 800,10"
-                fill="none" stroke="#D4AF37" strokeWidth="5" strokeLinecap="round"
+                fill="none" stroke="white" strokeWidth="5" strokeLinecap="round"
                 initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2 }}
               />
-              <motion.circle cx="800" cy="10" r="10" fill="#D4AF37" />
+              <motion.circle cx="800" cy="10" r="10" fill="white" />
             </svg>
           </div>
         </motion.div>
@@ -154,13 +161,12 @@ export default function FinancePage() {
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Receipt size={16} weight="fill" className="text-[#D4AF37]" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 block">Limite de Gastos Mensal</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 block">Limite</span>
               </div>
               {isEditing ? (
                 <input 
                   type="number" value={limit} onChange={e => setLimit(parseFloat(e.target.value))}
-                  className="bg-white/5 border-b border-[#D4AF37] text-3xl font-black text-white font-mono outline-none w-full" 
+                  className="bg-white/5 border-b border-white text-3xl font-black text-white font-mono outline-none w-full" 
                 />
               ) : (
                 <div className="text-3xl font-black font-mono tracking-tighter text-white">
@@ -171,95 +177,158 @@ export default function FinancePage() {
             {isEditing && (
               <div className="flex gap-2">
                 <button onClick={() => setSpent(prev => Math.max(prev - 100, 0))} className="text-white/20 hover:text-white"><MinusCircle size={20} /></button>
-                <button onClick={() => setSpent(prev => prev + 100)} className="text-[#D4AF37] hover:scale-110 transition-transform"><PlusCircle size={20} /></button>
+                <button onClick={() => setSpent(prev => prev + 100)} className="text-white hover:scale-110 transition-transform"><PlusCircle size={20} /></button>
               </div>
             )}
           </div>
 
           <div className="space-y-8 mt-auto">
             <div className="flex justify-between items-end mb-4">
-              <span className="text-[12px] font-black uppercase tracking-widest text-[#D4AF37]">Consumo Atual</span>
-              <span className="text-4xl font-black font-mono text-[#D4AF37] leading-none">65%</span>
+              <span className="text-[12px] font-black uppercase tracking-widest text-white/40">Consumo Atual</span>
+              <span className="text-4xl font-black text-white leading-none">{spentPercentage.toFixed(0)}%</span>
             </div>
             
-            {/* Expanded Horizontal Pill Bar Chart */}
-            <div className="flex items-center gap-6">
-              <span className="text-[12px] font-black text-[#D4AF37] min-w-[50px] tracking-widest uppercase">
-                {new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date()).replace('.', '')}
-              </span>
-              <div className="flex-1 h-14 bg-white/5 rounded-full border border-white/10 overflow-hidden relative p-1.5 shadow-inner">
-                <motion.div 
-                  initial={{ width: 0 }} 
-                  animate={{ width: `${spentPercentage}%` }} 
-                  transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
-                  className="h-full bg-gradient-to-r from-[#D4AF37]/80 to-[#D4AF37] rounded-full flex items-center justify-end px-5 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
-                >
-                  <span className="text-sm font-black text-black tracking-tight drop-shadow-sm">{(spent/1000).toFixed(1)}K</span>
-                </motion.div>
-              </div>
+            {/* Full-width Horizontal Pill Bar Chart (B&W Style) */}
+            <div className="w-full h-14 bg-white/5 rounded-full border border-white/10 overflow-hidden relative p-1.5 shadow-inner">
+              <motion.div 
+                initial={{ width: 0 }} 
+                animate={{ width: `${spentPercentage}%` }} 
+                transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
+                className="h-full bg-white rounded-full flex items-center justify-end px-5 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              >
+                <span className="text-sm font-black text-black tracking-tight drop-shadow-sm">{(spent/1000).toFixed(1)}K</span>
+              </motion.div>
             </div>
 
-            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-white/20 pt-4 border-t border-white/5">
-              <span>Teto: {limit.toLocaleString('pt-BR')}</span>
-              <span>Gasto: {spent.toLocaleString('pt-BR')}</span>
+            <div className="flex justify-center items-center pt-6 border-t border-white/5">
+              <span className="text-[12px] font-black uppercase tracking-[0.6em] text-white/80">
+                {new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())}
+              </span>
             </div>
           </div>
         </motion.div>
 
-        {/* Row 2: Strategy Widgets */}
-        <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-8 py-10">
-          <StrategyCard title="Análise Estática" icon={<ChartBar size={36} />} onClick={() => setActiveModal('statica')} desc="Processamento de stress de mercado." />
-          <StrategyCard title="Retorno Real" icon={<ArrowUpRight size={36} />} onClick={() => setActiveModal('retorno')} desc="Cálculo matemático vs IPCA." />
-          <StrategyCard title="Alocação Alpha" icon={<TrendUp size={36} />} onClick={() => setActiveModal('alpha')} accent desc="Sinais de ativos subvalorizados." />
+        {/* Row 2: Strategy Widgets & Summary (Padronizado) */}
+        <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-8 py-10 items-stretch">
+          <StrategyCard 
+            title="Análise Estática" 
+            icon={<ChartBar size={36} />} 
+            onClick={() => setActiveModal('statica')} 
+            desc="Processamento de stress de mercado e volatilidade." 
+          />
+          
+          <StrategyCard 
+            title="Resumo Global" 
+            icon={<PresentationChart size={36} />} 
+            onClick={() => setActiveModal('resumo')} 
+            accent 
+            desc="Visão consolidada de performance e alocação de ativos." 
+          />
+
+          <StrategyCard 
+            title="Alocação Alpha" 
+            icon={<TrendUp size={36} />} 
+            onClick={() => setActiveModal('alpha')} 
+            desc="Sinais quantitativos de ativos subvalorizados." 
+          />
         </div>
 
         {/* Row 3: Main Strategic Area (Engenharia) - Section Divider Style */}
+        <FullWidthDivider />
         <motion.div 
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          className="md:col-span-12 w-full py-24 border-t border-white/10 mt-10 relative overflow-hidden group"
+          className="md:col-span-12 w-full py-24 mt-10 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 p-12 opacity-5 transform group-hover:scale-110 transition-transform duration-1000 grayscale">
-            <PresentationChart size={240} weight="thin" />
-          </div>
           
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 px-4">
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center gap-3 justify-center md:justify-start mb-6">
-                 <Layout size={32} className="text-[#D4AF37]" strokeWidth={1} />
-                 <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-white">Engenharia de Carteira</h2>
+          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-24 px-4 relative z-10">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex flex-col mb-6">
+                 <h2 className="text-5xl md:text-[8rem] font-black uppercase tracking-tighter text-white leading-none">Minha<br/>Carteira</h2>
               </div>
               <p className="text-xl text-white/30 leading-relaxed max-w-2xl mb-12 font-light">A alocação algorítmica de ativos premium para otimização de risco-retorno sistêmico em horizontes de longo prazo.</p>
-              <div className="flex items-center gap-6 justify-center md:justify-start">
-                 <div className="flex items-center gap-2">
-                   <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Módulo Ativo em Beta</span>
-                 </div>
-                 <div className="h-4 w-[1px] bg-white/10" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]/40">Próxima Atualização: Q3 2026</span>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                {[
+                  { label: "Equities", val: "45%", color: "bg-white" },
+                  { label: "Fixed Income", val: "30%", color: "bg-white/40" },
+                  { label: "Alternatives", val: "15%", color: "bg-white/20" },
+                  { label: "Liquidity", val: "10%", color: "bg-white/10" }
+                ].map((item, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/20">{item.label}</span>
+                      <span className="text-xs font-bold text-white">{item.val}</span>
+                    </div>
+                    <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        whileInView={{ width: item.val }}
+                        className={`h-full ${item.color}`}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
             
-            <div className="w-72 h-72 grayscale opacity-10 relative hidden lg:block">
-               <div className="absolute inset-0 border-[2px] border-dashed border-white/20 rounded-full animate-spin-slow" />
-               <div className="absolute inset-0 flex items-center justify-center">
-                 <Crown size={64} className="text-[#D4AF37]/10" />
+            <div className="w-[480px] h-[480px] relative flex items-center justify-center p-8 scale-110 lg:scale-125">
+               {/* Large Analytical SVG Pie Chart (Clockwise Emerge Animation) */}
+               <svg 
+                 viewBox="0 0 100 100" 
+                 className="w-full h-full transform -rotate-90 filter drop-shadow-[0_0_30px_rgba(255,255,255,0.05)]"
+               >
+                 <defs>
+                   <mask id="revealMask">
+                     <motion.circle 
+                       initial={{ pathLength: 0 }}
+                       whileInView={{ pathLength: 1 }}
+                       transition={{ duration: 1.5, ease: "easeInOut" }}
+                       cx="50" cy="50" r="40" fill="transparent" stroke="white" strokeWidth="16" 
+                     />
+                   </mask>
+                 </defs>
+
+                 {/* Static Background Ring */}
+                 <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="15" />
+
+                 {/* Revealed Segment Group */}
+                 <g mask="url(#revealMask)">
+                   {/* Slice 1: 45% */}
+                   <circle 
+                     cx="50" cy="50" r="40" fill="transparent" stroke="#FFFFFF" strokeWidth="15" strokeDasharray="113.1 251.3" 
+                   />
+                   {/* Slice 2: 30% */}
+                   <circle 
+                     cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.4)" strokeWidth="15" strokeDasharray="75.4 251.3" strokeDashoffset="-113.1" 
+                   />
+                   {/* Slice 3: 15% */}
+                   <circle 
+                     cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.2)" strokeWidth="15" strokeDasharray="37.7 251.3" strokeDashoffset="-188.5" 
+                   />
+                   {/* Slice 4: 10% */}
+                   <circle 
+                     cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="15" strokeDasharray="25.1 251.3" strokeDashoffset="-226.2" 
+                   />
+                 </g>
+               </svg>
+               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                 <div className="flex flex-col items-center">
+                   <span className="text-xs font-black uppercase tracking-[0.4em] text-white/20 mb-2">Portfolio</span>
+                   <div className="text-center">
+                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 block">Alpha</span>
+                     <span className="text-6xl font-black text-white leading-none">4.0</span>
+                   </div>
+                 </div>
                </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Row 4: Summary Action */}
-        <div className="md:col-span-12 py-20 flex flex-col items-center gap-8">
-           <div className="h-px w-32 bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
-           <motion.button
-             whileHover={{ scale: 1.05 }}
-             className="px-20 py-8 bg-white/5 border border-white/10 rounded-[2.5rem] flex flex-col items-center gap-4 group opacity-40 cursor-not-allowed"
-           >
-             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-[#D4AF37]">Relatório Global</span>
-             <h3 className="text-3xl font-black uppercase tracking-tighter text-white transition-colors group-hover:text-[#D4AF37]">RESUMO</h3>
-             <span className="text-[8px] font-bold uppercase tracking-widest text-white/20">Em breve</span>
-           </motion.button>
+        {/* Row 4: Decorative Divider */}
+        <FullWidthDivider />
+        <div className="md:col-span-12 py-10 flex flex-col items-center gap-8">
+           <div className="h-px w-32 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         </div>
 
       </div>
@@ -272,7 +341,7 @@ export default function FinancePage() {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.05, opacity: 0 }} className="relative bg-[#1A1A1B] border border-white/10 rounded-[3rem] w-full max-w-5xl p-16 overflow-hidden shadow-2xl">
                <div className="flex justify-between items-start mb-16">
                  <div>
-                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37] mb-2 block">Performance Anual (2026)</span>
+                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2 block">Performance Anual (2026)</span>
                  </div>
                  <button onClick={() => setIsExpanded(false)} className="p-4 text-white/20 hover:text-white bg-white/5 rounded-full"><X size={24} weight="bold" /></button>
                </div>
@@ -285,14 +354,14 @@ export default function FinancePage() {
                          initial={{ height: 0 }}
                          animate={{ height: `${20 + (i * 5) % 80}%` }}
                          transition={{ delay: i * 0.05, type: 'spring', damping: 15 }}
-                         className={`w-full rounded-t-xl transition-all ${i === 2 ? 'bg-[#D4AF37]' : 'bg-[#D4AF37]/20 hover:bg-[#D4AF37]/40'}`}
+                         className={`w-full rounded-t-xl transition-all ${i === 2 ? 'bg-white' : 'bg-white/10 hover:bg-white/20'}`}
                        />
                        <span className="text-[10px] font-black uppercase text-white/20">{mes}</span>
                     </div>
                   ))}
                </div>
 
-               <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-[#D4AF37]/5 blur-[120px] rounded-full pointer-events-none" />
+               <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-white/5 blur-[120px] rounded-full pointer-events-none" />
             </motion.div>
           </div>
         )}
@@ -311,14 +380,14 @@ export default function FinancePage() {
                   {activeModal === 'alpha' ? (
                     <div className="space-y-4">
                       {alphaSignals.map(sig => (
-                        <div key={sig.asset} className="flex justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-[#D4AF37]/30 transition-all">
-                           <div><span className="text-xl font-bold text-[#D4AF37]">{sig.asset}</span><span className="text-[10px] block opacity-40 uppercase tracking-widest">{sig.type}</span></div>
+                        <div key={sig.asset} className="flex justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-white/30 transition-all">
+                           <div><span className="text-xl font-bold text-white">{sig.asset}</span><span className="text-[10px] block opacity-40 uppercase tracking-widest">{sig.type}</span></div>
                            <div className="text-right"><div className="text-emerald-400 font-black">{sig.potential}</div><div className="text-[10px] opacity-40 uppercase font-black">Risco {sig.risk}</div></div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="py-20 text-center border border-dashed border-white/10 rounded-3xl"><Warning size={48} className="text-[#D4AF37] mx-auto mb-4 opacity-50" /><p className="text-sm font-bold uppercase tracking-[0.3em] text-white/40">Geração de Dados...</p></div>
+                    <div className="py-20 text-center border border-dashed border-white/10 rounded-3xl"><Warning size={48} className="text-white mx-auto mb-4 opacity-50" /><p className="text-sm font-bold uppercase tracking-[0.3em] text-white/40">Geração de Dados...</p></div>
                   )}
                </div>
             </motion.div>
@@ -339,6 +408,12 @@ export default function FinancePage() {
   );
 }
 
+function FullWidthDivider() {
+  return (
+    <div className="md:col-span-12 w-[100vw] relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-[1px] bg-white/10 my-16" />
+  );
+}
+
 function StrategyCard({ title, icon, desc, onClick, accent }: any) {
   return (
     <motion.div 
@@ -346,15 +421,24 @@ function StrategyCard({ title, icon, desc, onClick, accent }: any) {
       whileHover={{ y: -5 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }} // Fast, responsive transition
-      className={`p-10 rounded-[2.5rem] border cursor-pointer group relative overflow-hidden ${
-        accent ? 'border-[#D4AF37] bg-gradient-to-br from-[#D4AF37] to-[#8C6D1F]' : 'bg-[#1A1A1B] border-white/5 hover:bg-[#232324]'
+      className={`p-10 rounded-[2.5rem] border cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[320px] ${
+        accent ? 'border-white bg-white text-black' : 'bg-[#1A1A1B] border-white/5 hover:bg-[#232324]'
       }`}
     >
-      <div className={`${accent ? 'text-black' : 'text-[#D4AF37]/40 group-hover:text-[#D4AF37]'} mb-8 transition-colors duration-200`}>
-        {icon}
+      <div>
+        <div className={`${accent ? 'text-black' : 'text-white/40 group-hover:text-white'} mb-8 transition-colors duration-200`}>
+          {icon}
+        </div>
+        <h4 className={`font-black uppercase tracking-tighter text-3xl mb-3 ${accent ? 'text-black' : 'text-white/90'}`}>{title}</h4>
+        <p className={`text-[12px] leading-relaxed font-medium ${accent ? 'text-black/60' : 'text-white/30'}`}>{desc}</p>
       </div>
-      <h4 className={`font-black uppercase tracking-tighter text-2xl mb-3 ${accent ? 'text-black' : 'text-white/90'}`}>{title}</h4>
-      <p className={`text-[12px] leading-relaxed font-medium ${accent ? 'text-black/70' : 'text-white/30'}`}>{desc}</p>
+      
+      {!accent && (
+        <div className="mt-8 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+           <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Visualizar Detalhes</span>
+           <ArrowRight size={14} className="text-white/40" />
+        </div>
+      )}
     </motion.div>
   );
 }
