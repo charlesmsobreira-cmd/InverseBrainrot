@@ -6,10 +6,10 @@ import { useState } from 'react';
 
 const navItems = [
   { id: 'overview',  icon: DotsNine,        label: 'Overview',  sectionId: null        },
-  { id: 'estudos',   icon: BookOpen,         label: 'Estudos',   sectionId: 'estudos'   },
-  { id: 'consumo',   icon: Coffee,           label: 'Consumo',   sectionId: 'consumo'   },
-  { id: 'financas',  icon: CurrencyDollar,   label: 'Finanças',  sectionId: 'financas'  },
   { id: 'rotina',    icon: CalendarCheck,    label: 'Rotina',    sectionId: 'rotina'    },
+  { id: 'estudos',   icon: BookOpen,         label: 'Estudos',   sectionId: 'estudos'   },
+  { id: 'financas',  icon: CurrencyDollar,   label: 'Finanças',  sectionId: 'financas'  },
+  { id: 'consumo',   icon: Coffee,           label: 'Consumo',   sectionId: 'consumo'   },
 ];
 
 export function Navigation() {
