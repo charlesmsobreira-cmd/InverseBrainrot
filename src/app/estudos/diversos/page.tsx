@@ -5,7 +5,7 @@ import { ArrowLeft, NotePencil, Plus, Link as LinkIcon, Trash, FileText, X, Stac
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useStudyMode } from '@/context/StudyModeContext';
+
 
 type LinkType = {
   id: string;
@@ -37,7 +37,7 @@ export default function DiversosPage() {
   const [pages, setPages] = useState<PageType[]>([]);
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { isImmersive } = useStudyMode();
+
 
   // Link addition form state
   const [isAddingLink, setIsAddingLink] = useState(false);
@@ -140,13 +140,9 @@ export default function DiversosPage() {
   };
 
   return (
-    <main className={`h-screen overflow-hidden flex flex-col transition-colors duration-1000 bg-transparent ${
-      isImmersive ? 'text-black' : 'text-[#1D1D1F]'
-    }`}>
+    <main className="h-screen overflow-hidden flex flex-col transition-colors duration-1000 bg-transparent text-[#1D1D1F]">
       {/* Header Clássico */}
-      <div className={`p-6 md:px-12 flex-shrink-0 flex items-center justify-between border-b transition-colors duration-1000 relative z-20 ${
-        isImmersive ? 'bg-white/40 backdrop-blur-md border-black/5 shadow-none' : 'bg-white border-black/5 shadow-sm'
-      }`}>
+      <div className="p-6 md:px-12 flex-shrink-0 flex items-center justify-between border-b transition-colors duration-1000 relative z-20 bg-white border-black/5 shadow-sm">
         <Link href="/estudos">
           <motion.button 
             whileHover={{ x: -5 }}
@@ -167,9 +163,7 @@ export default function DiversosPage() {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-[1920px] mx-auto w-full">
         
         {/* Painel Esquerdo (Notepad / Empty State) */}
-        <div className={`flex-1 lg:w-2/3 transition-all duration-1000 border-r flex flex-col h-full overflow-hidden ${
-          isImmersive ? 'bg-white/10 border-black/5' : 'bg-[#F5F5F7] border-black/5'
-        }`}>
+        <div className="flex-1 lg:w-2/3 transition-all duration-1000 border-r flex flex-col h-full overflow-hidden bg-[#F5F5F7] border-black/5">
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center opacity-30">
               <div className="flex flex-col items-center gap-3">
@@ -187,9 +181,7 @@ export default function DiversosPage() {
                     type="text" 
                     value={activePage.title}
                     onChange={e => updateActivePageTitle(e.target.value)}
-                    className={`text-4xl font-black tracking-tighter bg-transparent outline-none w-full placeholder:text-zinc-400 transition-colors duration-1000 ${
-                      isImmersive ? 'text-black' : 'text-zinc-100'
-                    }`}
+                    className="text-4xl font-black tracking-tighter bg-transparent outline-none w-full placeholder:text-zinc-400 transition-colors duration-1000 text-zinc-100"
                     placeholder="Página Sem Título"
                   />
                 </div>
@@ -200,11 +192,7 @@ export default function DiversosPage() {
 
               <div className="flex-1 overflow-hidden px-6 md:px-8 pb-8 flex flex-col">
                 <textarea 
-                  className={`w-full h-full border rounded-[2rem] p-8 focus:outline-none focus:border-zinc-500 focus:ring-4 focus:ring-zinc-500/10 resize-none font-mono text-base shadow-sm transition-all duration-1000 leading-relaxed ${
-                    isImmersive 
-                      ? 'bg-white/80 backdrop-blur-sm border-black/10 text-black placeholder:text-black/20' 
-                      : 'bg-white border-black/10 text-zinc-900 placeholder:text-zinc-400/50'
-                  }`}
+                  className="w-full h-full border rounded-[2rem] p-8 focus:outline-none focus:border-zinc-500 focus:ring-4 focus:ring-zinc-500/10 resize-none font-mono text-base shadow-sm transition-all duration-1000 leading-relaxed bg-white border-black/10 text-zinc-900 placeholder:text-zinc-400/50"
                   placeholder="Comece a digitar seus pensamentos, vocabulário novo ou rascunhos aqui..."
                   value={activePage.notes}
                   onChange={(e) => updateActivePageNotes(e.target.value)}
@@ -238,12 +226,8 @@ export default function DiversosPage() {
         </div>
 
         {/* Painel Direito (Gerenciador Centralizado) - Fixed width on LG */}
-        <div className={`lg:w-1/3 transition-all duration-1000 h-[50vh] lg:h-auto flex flex-col relative flex-shrink-0 lg:flex-shrink ${
-          isImmersive ? 'bg-white/30 backdrop-blur-md text-[#2D3748]' : 'bg-white text-[#1D1D1F]'
-        }`}>
-           <div className={`h-14 border-b flex items-center justify-between px-6 flex-shrink-0 z-10 transition-colors duration-1000 ${
-             isImmersive ? 'border-black/5 bg-black/5' : 'border-black/5 bg-titanium-50/10'
-           }`}>
+        <div className="lg:w-1/3 transition-all duration-1000 h-[50vh] lg:h-auto flex flex-col relative flex-shrink-0 lg:flex-shrink bg-white text-[#1D1D1F]">
+           <div className="h-14 border-b flex items-center justify-between px-6 flex-shrink-0 z-10 transition-colors duration-1000 border-black/5 bg-titanium-50/10">
              <div className="flex items-center gap-2">
                <Stack size={20} className="text-titanium-400" />
                <span className="font-bold text-xs uppercase tracking-widest text-titanium-400">Páginas e Links</span>
@@ -265,8 +249,8 @@ export default function DiversosPage() {
                    key={page.id} 
                    className={`rounded-2xl border transition-all overflow-hidden ${
                       isActive 
-                        ? (isImmersive ? 'bg-white/5 border-azure-500/40 shadow-xl' : 'bg-[#F5F5F7] border-azure-500/30 shadow-sm') 
-                        : (isImmersive ? 'bg-transparent border-white/5 hover:bg-white/[0.02]' : 'bg-white border-black/5 hover:border-black/20')
+                        ? 'bg-[#F5F5F7] border-azure-500/30 shadow-sm' 
+                        : 'bg-white border-black/5 hover:border-black/20'
                     }`}
                  >
                    {/* Page Header */}
@@ -303,9 +287,7 @@ export default function DiversosPage() {
                        </div>
 
                        {isAddingLink && (
-                         <div className={`p-4 rounded-xl border shadow-sm space-y-3 mb-4 transition-all duration-1000 ${
-                            isImmersive ? 'bg-white/5 border-azure-500/30' : 'bg-white border-azure-500/30'
-                          }`}>
+                         <div className="p-4 rounded-xl border shadow-sm space-y-3 mb-4 transition-all duration-1000 bg-white border-azure-500/30">
                            <input 
                              type="text" placeholder="Nome do link" 
                              className="w-full text-xs p-2.5 bg-black/5 rounded-lg outline-none focus:ring-1 focus:ring-azure-500" 
