@@ -142,6 +142,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       : `Na wishlist.`;
 
     const newLog = {
+      id: Date.now().toString(),
       title: name,
       description: descriptionText,
       subtitle: extra,
