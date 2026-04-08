@@ -8,16 +8,6 @@ import { useStudyMode } from '@/context/StudyModeContext';
 
 const MAX_SESSION_MINUTES = 180; // 3 Hours
 
-// Lakers Colors
-const LAKERS_PURPLE = '#552583';
-const LAKERS_GOLD   = '#FDB927';
-
-type StudyLog = {
-  id: string;
-  duration_minutes: number;
-  created_at: string;
-};
-
 export default function StudyTimer() {
   const [isRunning, setIsRunning] = useState(false);
   const [totalMinutes, setTotalMinutes] = useState(0);
@@ -27,7 +17,7 @@ export default function StudyTimer() {
   const [showNotification, setShowNotification] = useState<string | null>(null);
   const [logs, setLogs] = useState<StudyLog[]>([]);
   const [showLogs, setShowLogs] = useState(false);
-  const { setIsImmersive } = useStudyMode();
+  const { isImmersive, setIsImmersive } = useStudyMode();
 
   const loadInitialData = useCallback(async () => {
     // ── Weekly Reset Logic ──
@@ -85,7 +75,7 @@ export default function StudyTimer() {
       .limit(7);
 
     if (logEntries) setLogs(logEntries);
-  }, []);
+  }, [setIsImmersive]);
 
   useEffect(() => {
     loadInitialData();
@@ -207,60 +197,6 @@ export default function StudyTimer() {
 
   return (
     <>
-      {/* ── IMERSIVE FULL-SCREEN LAKERS OVERLAY ── */}
-      <AnimatePresence>
-        {isRunning && (
-          <motion.div
-            key="lakers-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.8, ease: 'easeInOut' }}
-            className="fixed inset-0 pointer-events-none"
-            style={{ zIndex: 15 }}
-          >
-            {/* Purple blob — full width, covers both panels */}
-            <motion.div
-              animate={{ scale: [1, 1.12, 1], x: [0, 20, 0] }}
-              transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -top-[30%] -left-[10%] w-[120vw] h-[100vh] rounded-full blur-[100px] will-change-transform"
-              style={{ backgroundColor: `${LAKERS_PURPLE}30`, transform: 'translateZ(0)' }}
-            />
-            {/* Gold blob — bottom right */}
-            <motion.div
-              animate={{ scale: [1, 1.15, 1], x: [0, -20, 0] }}
-              transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-              className="absolute -bottom-[30%] -right-[10%] w-[80vw] h-[80vh] rounded-full blur-[100px] will-change-transform"
-              style={{ backgroundColor: `${LAKERS_GOLD}12`, transform: 'translateZ(0)' }}
-            />
-            <div className="absolute inset-0 bg-black/20" />
-
-            {/* "FOCO ATIVO" badge — fixed, high z-index, truly centered */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ delay: 0.5 }}
-              className="fixed top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 pointer-events-none"
-              style={{ zIndex: 200 }}
-            >
-              <motion.span
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: LAKERS_GOLD }}
-              />
-              <span
-                className="text-[10px] font-black uppercase tracking-[0.5em] whitespace-nowrap"
-                style={{ color: LAKERS_GOLD }}
-              >
-                Foco Ativo — Mamba Mode
-              </span>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ── TIMER WIDGET ── */}
       <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end gap-4 pointer-events-none">
 
@@ -271,74 +207,71 @@ export default function StudyTimer() {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="w-[440px] rounded-[3.5rem] p-10 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] mb-2 pointer-events-auto overflow-hidden border"
+              className="w-[340px] rounded-[3rem] p-8 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] mb-2 pointer-events-auto overflow-hidden border transition-colors duration-500"
               style={{
-                backgroundColor: isRunning ? '#1a0a2e' : 'rgba(13,13,13,0.8)',
-                borderColor: isRunning ? `${LAKERS_PURPLE}60` : 'rgba(255,255,255,0.08)',
-                backdropFilter: 'blur(64px)',
+                backgroundColor: isImmersive ? 'white' : 'rgba(13,13,13,0.8)',
+                borderColor: isImmersive ? 'black/5' : 'rgba(255,255,255,0.08)',
+                backdropFilter: 'blur(32px)',
               }}
             >
-              <div className="flex items-center gap-3 mb-10">
+              <div className="flex items-center gap-3 mb-8">
                 <CalendarBlank
-                  size={24}
-                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
+                  size={20}
+                  className={isImmersive ? 'text-black' : 'text-white'}
                 />
                 <span
-                  className="text-sm font-black uppercase tracking-[0.3em]"
-                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
+                  className={`text-[10px] font-black uppercase tracking-[0.3em] ${isImmersive ? 'text-black' : 'text-white'}`}
                 >
-                  Sessões da Semana
+                  Sessões Recentes
                 </span>
               </div>
 
-              <div className="space-y-6 max-h-[380px] overflow-y-auto no-scrollbar pr-2">
+              <div className="space-y-6 max-h-[300px] overflow-y-auto no-scrollbar pr-2">
                 {logs.length === 0 ? (
                   <div
-                    className="py-16 flex flex-col items-center gap-4 border-2 border-dashed rounded-[2.5rem]"
-                    style={{ borderColor: isRunning ? `${LAKERS_PURPLE}40` : 'rgba(255,255,255,0.05)' }}
+                    className="py-12 flex flex-col items-center gap-4 border-2 border-dashed rounded-[2rem]"
+                    style={{ borderColor: isImmersive ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)' }}
                   >
-                    <Clock size={40} className="opacity-10" style={{ color: 'white' }} />
+                    <Clock size={32} className="opacity-10" color={isImmersive ? 'black' : 'white'} />
                     <p
-                      className="text-[10px] font-black uppercase tracking-widest opacity-30 text-white"
+                      className={`text-[9px] font-black uppercase tracking-widest opacity-30 ${isImmersive ? 'text-black' : 'text-white'}`}
                     >
-                      Nenhuma sessão nesta semana
+                      Nenhum registro
                     </p>
                   </div>
                 ) : (
                   logs.map(log => (
                     <div key={log.id} className="flex items-center justify-between group p-1 transition-all">
-                      <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-col gap-1">
                         <span
-                          className="text-xs font-black uppercase tracking-tight text-white/90"
+                          className={`text-[11px] font-black uppercase tracking-tight ${isImmersive ? 'text-black/80' : 'text-white/90'}`}
                         >
                           {formatDateLabel(log.created_at)}
                         </span>
                         <span
-                          className="text-[10px] font-mono opacity-30 text-white italic"
+                          className={`text-[9px] font-mono opacity-30 ${isImmersive ? 'text-black' : 'text-white'} italic`}
                         >
-                          {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                          {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         <div
-                          className="px-6 py-3 rounded-2xl shadow-xl transition-transform group-hover:scale-105"
+                          className="px-4 py-2 rounded-xl transition-transform group-hover:scale-105"
                           style={{
-                            backgroundColor: isRunning ? LAKERS_PURPLE : 'rgba(255,255,255,0.03)',
-                            border: isRunning ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                            boxShadow: isRunning ? `0 8px 32px ${LAKERS_PURPLE}60` : 'none',
+                            backgroundColor: isImmersive ? 'black' : 'rgba(255,255,255,0.03)',
+                            border: isImmersive ? 'none' : '1px solid rgba(255,255,255,0.1)',
                           }}
                         >
-                          <span className="text-[13px] font-mono font-black text-white">
+                          <span className={`text-[12px] font-mono font-black ${isImmersive ? 'text-white' : 'text-white'}`}>
                             {formatTotalTime(log.duration_minutes)}
                           </span>
                         </div>
                         
-                        {/* Delete Button - Subtle */}
                         <button
                           onClick={() => deleteLog(log.id)}
-                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white/10 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ${isImmersive ? 'text-black/10 hover:text-red-500 hover:bg-red-50' : 'text-white/10 hover:text-red-500 hover:bg-red-500/10'}`}
                         >
-                          <Trash size={18} />
+                          <Trash size={16} />
                         </button>
                       </div>
                     </div>
@@ -356,7 +289,7 @@ export default function StudyTimer() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="bg-red-500/90 backdrop-blur-xl text-white px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-3 shadow-2xl border border-red-400/50"
+                className="bg-black text-white px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-3 shadow-2xl"
               >
                 <WarningCircle size={18} weight="bold" /> {showNotification}
               </motion.div>
@@ -368,17 +301,12 @@ export default function StudyTimer() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowLogs(!showLogs)}
-            className="w-14 h-14 rounded-full flex items-center justify-center transition-all border"
+            className="w-14 h-14 rounded-full flex items-center justify-center transition-all border shadow-lg"
             style={{
-              backgroundColor: isRunning 
-                ? (showLogs ? LAKERS_PURPLE : 'rgba(85,37,131,0.2)') 
-                : (showLogs ? 'white' : 'rgba(255,255,255,0.05)'),
-              borderColor: isRunning ? `${LAKERS_PURPLE}80` : 'rgba(255,255,255,0.1)',
-              color: isRunning 
-                ? (showLogs ? 'white' : LAKERS_GOLD) 
-                : (showLogs ? 'black' : 'white'),
+              backgroundColor: isImmersive ? (showLogs ? 'black' : 'white') : (showLogs ? 'white' : 'rgba(255,255,255,0.05)'),
+              borderColor: isImmersive ? 'black/10' : 'rgba(255,255,255,0.1)',
+              color: isImmersive ? (showLogs ? 'white' : 'black') : (showLogs ? 'black' : 'white'),
               backdropFilter: 'blur(32px)',
-              boxShadow: isRunning && showLogs ? `0 0 32px ${LAKERS_PURPLE}60` : 'none',
             }}
           >
             <CaretDown size={22} weight="bold" style={{ transform: showLogs ? 'none' : 'rotate(180deg)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} />
@@ -388,27 +316,22 @@ export default function StudyTimer() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-2 rounded-full flex items-center gap-4 border"
+            className="p-2 rounded-full flex items-center gap-4 border shadow-2xl transition-colors duration-700"
             style={{
-              backgroundColor: isRunning ? 'rgba(20, 5, 40, 0.85)' : 'rgba(13,13,13,0.8)',
+              backgroundColor: isImmersive ? 'white' : 'rgba(13,13,13,0.8)',
               backdropFilter: 'blur(48px)',
-              borderColor: isRunning ? `${LAKERS_PURPLE}80` : 'rgba(255,255,255,0.1)',
-              boxShadow: isRunning
-                ? `0 0 0 1px ${LAKERS_PURPLE}60, 0 12px 48px ${LAKERS_PURPLE}60`
-                : '0 12px 40px rgba(0,0,0,0.4)',
+              borderColor: isImmersive ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)',
             }}
           >
             <div className="flex items-center pl-5 pr-1 gap-6">
               <div className="flex flex-col">
                 <span
-                  className="text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1.5 opacity-40 text-white"
-                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
+                  className={`text-[9px] font-black uppercase tracking-[0.2em] leading-none mb-1 opacity-40 ${isImmersive ? 'text-black' : 'text-white'}`}
                 >
-                  {isRunning ? 'Mamba Mode' : 'Total Semanal'}
+                  {isRunning ? 'Foco Profundo' : 'Total Semanal'}
                 </span>
                 <span
-                  className="text-lg font-black font-mono leading-none tracking-tighter text-white"
-                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
+                  className={`text-lg font-black font-mono leading-none tracking-tighter ${isImmersive ? 'text-black' : 'text-white'}`}
                 >
                   {isRunning ? formatDisplayTime(sessionSeconds) : formatTotalTime(totalMinutes)}
                 </span>
@@ -420,13 +343,10 @@ export default function StudyTimer() {
                 disabled={isSyncing}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
-                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-700 relative overflow-hidden group/btn"
+                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-700 relative overflow-hidden shadow-xl"
                 style={{
-                  backgroundColor: isRunning ? LAKERS_PURPLE : 'white',
-                  color: isRunning ? LAKERS_GOLD : 'black',
-                  boxShadow: isRunning
-                    ? `0 0 30px ${LAKERS_PURPLE}80, 0 0 60px ${LAKERS_PURPLE}40`
-                    : '0 8px 32px rgba(255,255,255,0.2)',
+                  backgroundColor: isRunning ? 'black' : (isImmersive ? '#F5F5F7' : 'white'),
+                  color: isRunning ? 'white' : 'black',
                 }}
               >
                 {isSyncing ? (
@@ -436,17 +356,16 @@ export default function StudyTimer() {
                     animate={{ rotate: isRunning ? 180 : 0 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 10 }}
                   >
-                    <Hourglass size={30} weight={isRunning ? 'fill' : 'bold'} />
+                    <Hourglass size={28} weight={isRunning ? 'fill' : 'bold'} />
                   </motion.div>
                 )}
 
-                {/* Pulsing glow when active */}
+                {/* Pulsing indicator when active */}
                 {isRunning && (
                   <motion.div
-                    animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.4, 1] }}
+                    animate={{ opacity: [0.3, 0.1, 0.3], scale: [1, 1.2, 1] }}
                     transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ backgroundColor: `${LAKERS_GOLD}40` }}
+                    className="absolute inset-0 rounded-full bg-white/10 pointer-events-none"
                   />
                 )}
               </motion.button>
@@ -457,4 +376,5 @@ export default function StudyTimer() {
     </>
   );
 }
+
 

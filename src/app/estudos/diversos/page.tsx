@@ -140,12 +140,12 @@ export default function DiversosPage() {
   };
 
   return (
-    <main className={`h-screen overflow-hidden flex flex-col transition-colors duration-1000 ${
-      isImmersive ? 'bg-transparent text-[#F5F5F7]' : 'bg-transparent text-[#1D1D1F]'
+    <main className={`h-screen overflow-hidden flex flex-col transition-colors duration-1000 bg-transparent ${
+      isImmersive ? 'text-black' : 'text-[#1D1D1F]'
     }`}>
       {/* Header Clássico */}
       <div className={`p-6 md:px-12 flex-shrink-0 flex items-center justify-between border-b transition-colors duration-1000 relative z-20 ${
-        isImmersive ? 'bg-[#131314] border-white/5 shadow-none' : 'bg-white border-black/5 shadow-sm'
+        isImmersive ? 'bg-white/40 backdrop-blur-md border-black/5 shadow-none' : 'bg-white border-black/5 shadow-sm'
       }`}>
         <Link href="/estudos">
           <motion.button 
@@ -168,7 +168,7 @@ export default function DiversosPage() {
         
         {/* Painel Esquerdo (Notepad / Empty State) */}
         <div className={`flex-1 lg:w-2/3 transition-all duration-1000 border-r flex flex-col h-full overflow-hidden ${
-          isImmersive ? 'bg-transparent border-white/5' : 'bg-[#F5F5F7] border-black/5'
+          isImmersive ? 'bg-white/10 border-black/5' : 'bg-[#F5F5F7] border-black/5'
         }`}>
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center opacity-30">
@@ -187,8 +187,8 @@ export default function DiversosPage() {
                     type="text" 
                     value={activePage.title}
                     onChange={e => updateActivePageTitle(e.target.value)}
-                    className={`text-4xl font-black tracking-tighter bg-transparent outline-none w-full placeholder:text-titanium-200 transition-colors duration-1000 ${
-                      isImmersive ? 'text-white' : 'text-titanium-100'
+                    className={`text-4xl font-black tracking-tighter bg-transparent outline-none w-full placeholder:text-zinc-400 transition-colors duration-1000 ${
+                      isImmersive ? 'text-black' : 'text-zinc-100'
                     }`}
                     placeholder="Página Sem Título"
                   />
@@ -200,10 +200,10 @@ export default function DiversosPage() {
 
               <div className="flex-1 overflow-hidden px-6 md:px-8 pb-8 flex flex-col">
                 <textarea 
-                  className={`w-full h-full border rounded-[2rem] p-8 focus:outline-none focus:border-azure-500 focus:ring-4 focus:ring-azure-500/10 resize-none font-mono text-base shadow-sm transition-all duration-1000 leading-relaxed ${
+                  className={`w-full h-full border rounded-[2rem] p-8 focus:outline-none focus:border-zinc-500 focus:ring-4 focus:ring-zinc-500/10 resize-none font-mono text-base shadow-sm transition-all duration-1000 leading-relaxed ${
                     isImmersive 
-                      ? 'bg-[#1A1A1B] border-white/10 text-titanium-200 placeholder:text-titanium-500/30' 
-                      : 'bg-white border-black/10 text-titanium-200 placeholder:text-titanium-400/50'
+                      ? 'bg-white/80 backdrop-blur-sm border-black/10 text-black placeholder:text-black/20' 
+                      : 'bg-white border-black/10 text-zinc-900 placeholder:text-zinc-400/50'
                   }`}
                   placeholder="Comece a digitar seus pensamentos, vocabulário novo ou rascunhos aqui..."
                   value={activePage.notes}
@@ -239,10 +239,10 @@ export default function DiversosPage() {
 
         {/* Painel Direito (Gerenciador Centralizado) - Fixed width on LG */}
         <div className={`lg:w-1/3 transition-all duration-1000 h-[50vh] lg:h-auto flex flex-col relative flex-shrink-0 lg:flex-shrink ${
-          isImmersive ? 'bg-[#131314] text-[#F5F5F7]' : 'bg-white text-[#1D1D1F]'
+          isImmersive ? 'bg-white/30 backdrop-blur-md text-[#2D3748]' : 'bg-white text-[#1D1D1F]'
         }`}>
            <div className={`h-14 border-b flex items-center justify-between px-6 flex-shrink-0 z-10 transition-colors duration-1000 ${
-             isImmersive ? 'border-white/5 bg-white/5' : 'border-black/5 bg-titanium-50/10'
+             isImmersive ? 'border-black/5 bg-black/5' : 'border-black/5 bg-titanium-50/10'
            }`}>
              <div className="flex items-center gap-2">
                <Stack size={20} className="text-titanium-400" />

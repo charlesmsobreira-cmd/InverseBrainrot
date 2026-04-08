@@ -1,132 +1,166 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Tray, FloppyDisk, Trash, CloudArrowUp } from '@phosphor-icons/react';
-import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { ArrowLeft, Tray, Plus, Trash, Check, Selection } from '@phosphor-icons/react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+
+interface Capture {
+  id: string;
+  text: string;
+}
+
+interface Task {
+  id: string;
+  text: string;
+  done: boolean;
+  completedAt?: number; // Timestamp
+}
 
 export default function InboxPage() {
-  const [note, setNote] = useState<string>('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [captures, setCaptures] = useState<Capture[]>([]);
+  const [newCapture, setNewCapture] = useState('');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from Supabase on mount
+  // Load from localStorage
   useEffect(() => {
-    const loadNote = async () => {
-      const { data } = await supabase.from('inbox').select('content').eq('id', 1).single();
-      if (data) setNote(data.content || '');
-    };
-    loadNote();
+    const savedCaptures = localStorage.getItem('inbox_captures');
+    const savedTasks = localStorage.getItem('routine_tasks');
+    
+    let parsedCaptures = savedCaptures ? JSON.parse(savedCaptures) : [];
+    let parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
+
+    // Auto-delete logic: Filter out tasks completed more than 5 days ago
+    const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    parsedTasks = parsedTasks.filter((task: Task) => {
+      if (task.done && task.completedAt) {
+        return now - task.completedAt < FIVE_DAYS_MS;
+      }
+      return true;
+    });
+    
+    setCaptures(parsedCaptures);
+    setTasks(parsedTasks);
+    setIsLoaded(true);
   }, []);
 
-  // Auto-save logic with debounce
+  // Sync to localStorage
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      setIsSaving(true);
-      await supabase.from('inbox').upsert({ id: 1, content: note, updated_at: new Date().toISOString() });
-      setIsSaving(false);
-      setLastSaved(new Date().toLocaleTimeString());
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [note]);
-
-  const clearNote = async () => {
-    if (confirm('Tem certeza que deseja apagar tudo? Esta ação não pode ser desfeita.')) {
-      setNote('');
-      await supabase.from('inbox').upsert({ id: 1, content: '', updated_at: new Date().toISOString() });
+    if (isLoaded) {
+      localStorage.setItem('inbox_captures', JSON.stringify(captures));
+      localStorage.setItem('routine_tasks', JSON.stringify(tasks));
     }
+  }, [captures, tasks, isLoaded]);
+
+  const addCapture = () => {
+    if (!newCapture.trim()) return;
+    const item: Capture = { id: Date.now().toString(), text: newCapture.trim() };
+    setCaptures([item, ...captures]);
+    setNewCapture('');
+  };
+
+  const removeCapture = (id: string) => {
+    setCaptures(captures.filter(c => c.id !== id));
+  };
+
+  const promoteToTask = (capture: Capture) => {
+    const newTask: Task = { id: Date.now().toString(), text: capture.text, done: false };
+    setTasks([newTask, ...tasks]);
+    removeCapture(capture.id);
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] p-6 md:p-12 lg:p-24 overflow-hidden flex flex-col">
-      <div className="max-w-[1400px] mx-auto w-full flex-1 flex flex-col">
-        {/* Header Navigation */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
-          <div className="flex items-center gap-6">
-            <Link href="/">
-              <motion.button 
-                whileHover={{ x: -5 }}
-                className="group flex items-center justify-center w-12 h-12 bg-white rounded-full border border-black/5 hover:bg-black/5 transition-all shadow-sm"
-              >
-                <ArrowLeft size={24} className="text-titanium-100" />
-              </motion.button>
-            </Link>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-azure-500 rounded-2xl flex items-center justify-center shadow-lg shadow-azure-500/20">
-                <Tray size={28} className="text-white" weight="fill" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black uppercase tracking-tighter text-titanium-100 leading-none">
-                  Inbox
-                </h1>
-                <p className="text-sm font-mono text-titanium-400 uppercase tracking-widest mt-1">
-                  Captura Rápida
-                </p>
-              </div>
+    <main className="min-h-screen bg-white text-black p-6 md:p-12 lg:p-24 selection:bg-black selection:text-white">
+      <div className="max-w-2xl mx-auto w-full">
+        
+        {/* Header */}
+        <div className="flex flex-col items-center text-center gap-8 mb-24">
+          <Link href="/">
+            <motion.button 
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="w-14 h-14 rounded-full border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm"
+            >
+              <ArrowLeft size={24} weight="bold" />
+            </motion.button>
+          </Link>
+          <div>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Tray size={20} weight="fill" className="text-black/20" />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20">Captura Direta</span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-3 rounded-full border border-black/5 shadow-sm">
-            <AnimatePresence mode="wait">
-              {isSaving ? (
-                <motion.div 
-                  key="saving"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-2 text-azure-500 text-sm font-bold uppercase tracking-widest"
-                >
-                  <CloudArrowUp size={18} className="animate-pulse" />
-                  Salvando...
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="saved"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-2 text-titanium-400 text-xs font-mono"
-                >
-                  <FloppyDisk size={18} />
-                  {lastSaved ? `Última sincronização: ${lastSaved}` : 'Pronto para escrever'}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <h1 className="text-7xl md:text-9xl font-black uppercase tracking-tighter leading-none italic">
+              Inbox
+            </h1>
           </div>
         </div>
 
-        {/* Notepad Area */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex-1 flex flex-col relative group"
-        >
-          <div className="absolute inset-0 bg-azure-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
-          
-          <div className="flex-1 glass-panel rounded-[3rem] p-8 md:p-12 relative overflow-hidden flex flex-col shadow-2xl">
-             <textarea
-               value={note}
-               onChange={(e) => setNote(e.target.value)}
-               placeholder="Comece a digitar sua ideia..."
-               className="flex-1 w-full bg-transparent border-none outline-none text-xl md:text-2xl leading-relaxed text-titanium-100 placeholder:text-titanium-500/50 resize-none font-light selection:bg-azure-500/10 selection:text-azure-600"
-               autoFocus
-             />
+        {/* Central Capture Area */}
+        <section className="flex flex-col gap-12">
+          <div>
+            <h2 className="text-3xl font-black uppercase tracking-tighter mb-12 flex items-center gap-3 justify-center">
+              <Selection size={24} weight="bold" className="text-black/10" />
+              Drenagem Mental
+            </h2>
+            
+            <div className="relative mb-16">
+              <input 
+                type="text" 
+                value={newCapture}
+                onChange={(e) => setNewCapture(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addCapture()}
+                placeholder="Capture uma nova ideia..."
+                className="w-full bg-black/5 border-none outline-none p-8 rounded-[2.5rem] text-xl font-bold placeholder:text-black/20 focus:bg-black/10 transition-all shadow-inner"
+              />
+              <button 
+                onClick={addCapture}
+                className="absolute right-4 top-4 w-14 h-14 bg-black text-white rounded-[1.5rem] flex items-center justify-center hover:scale-105 transition-transform shadow-xl"
+              >
+                <Plus size={24} weight="bold" />
+              </button>
+            </div>
 
-             {/* Bottom Actions */}
-             <div className="flex justify-end gap-4 pt-6 border-t border-black/5">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={clearNote}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full text-titanium-400 hover:text-red-500 hover:bg-red-500/5 transition-all text-xs font-bold uppercase tracking-widest"
-                >
-                  <Trash size={18} />
-                  Limpar Inbox
-                </motion.button>
-             </div>
+            <div className="flex flex-col gap-4">
+              <AnimatePresence mode="popLayout">
+                {captures.map((item) => (
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    key={item.id}
+                    className="group p-6 bg-white border border-black/5 rounded-[2rem] flex items-center justify-between hover:border-black/20 transition-all shadow-sm"
+                  >
+                    <span className="text-lg font-bold tracking-tight">{item.text}</span>
+                    <div className="flex items-center gap-3">
+                       <button 
+                         onClick={() => promoteToTask(item)}
+                         className="flex items-center gap-2 px-5 py-3 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                       >
+                         Mover para To-Do
+                         <Check size={14} weight="bold" />
+                       </button>
+                       <button 
+                         onClick={() => removeCapture(item.id)}
+                         className="w-10 h-10 rounded-full flex items-center justify-center text-black/10 hover:text-red-500 hover:bg-red-500/5 transition-all"
+                       >
+                         <Trash size={18} />
+                       </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              
+              {captures.length === 0 && (
+                <div className="py-24 text-center border-2 border-dashed border-black/10 rounded-[4rem]">
+                  <p className="text-xs font-black uppercase tracking-[0.4em] text-black/10 italic">Aguardando novas ideias...</p>
+                </div>
+              )}
+            </div>
           </div>
-        </motion.div>
+        </section>
       </div>
     </main>
   );

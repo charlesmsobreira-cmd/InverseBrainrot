@@ -1,30 +1,14 @@
-'use client';
-
-import StudyTimer from '@/components/StudyTimer';
-import { StudyModeProvider } from '@/context/StudyModeContext';
-
-function StudyLayoutContent({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="min-h-screen text-white"
-      style={{ backgroundColor: '#080808' }}
-    >
-      <StudyTimer />
-      {children}
-    </div>
-  );
-}
-
 export default function StudyLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <StudyModeProvider>
-      <StudyLayoutContent>
+    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden relative">
+      <div className="relative z-10 w-full h-full">
         {children}
-      </StudyLayoutContent>
-    </StudyModeProvider>
+      </div>
+    </div>
   );
 }
+

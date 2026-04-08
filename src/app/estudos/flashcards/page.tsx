@@ -54,8 +54,8 @@ export default function FlashcardsPage() {
   const currentCard = deck[currentIndex];
 
   return (
-    <main className={`min-h-screen p-8 md:p-12 overflow-hidden flex flex-col relative transition-colors duration-1000 ${
-      isImmersive ? 'bg-transparent text-[#F5F5F7]' : 'bg-transparent text-[#1D1D1F]'
+    <main className={`min-h-screen p-8 md:p-12 overflow-hidden flex flex-col relative transition-colors duration-1000 bg-transparent ${
+      isImmersive ? 'text-black' : 'text-[#1D1D1F]'
     }`}>
       
       {/* Background Graphic */}
@@ -74,10 +74,10 @@ export default function FlashcardsPage() {
           </motion.button>
         </Link>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-sm border transition-colors duration-1000 ${
-          isImmersive ? 'bg-white/5 border-white/10' : 'bg-white border-black/5'
+          isImmersive ? 'bg-white/80 border-black/10' : 'bg-white border-black/5'
         }`}>
-          <Cards size={16} className="text-azure-500" />
-          <span className={`text-[10px] font-bold uppercase tracking-widest ${isImmersive ? 'text-titanium-300' : 'text-titanium-400'}`}>
+          <Cards size={16} className="text-zinc-500" />
+          <span className={`text-[10px] font-bold uppercase tracking-widest ${isImmersive ? 'text-black' : 'text-zinc-400'}`}>
             Italiano Básico ({currentIndex + 1}/{deck.length})
           </span>
         </div>
@@ -90,7 +90,7 @@ export default function FlashcardsPage() {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className={`p-12 rounded-[3rem] shadow-xl border text-center w-full transition-colors duration-1000 ${
-              isImmersive ? 'bg-[#1A1A1B] border-white/10' : 'bg-white border-black/5'
+              isImmersive ? 'bg-white border-black/5' : 'bg-white border-black/5'
             }`}
           >
             <CheckCircle size={64} className="mx-auto text-emerald-500 mb-6" weight="duotone" />

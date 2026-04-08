@@ -25,6 +25,7 @@ interface Task {
   id: string;
   text: string;
   done: boolean;
+  completedAt?: number;
 }
 
 // --- Sub-componente: Modal de Recomendação (Inspiração) ---
@@ -229,14 +230,14 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                      className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-black/[0.02] border-transparent text-black/30' : 'bg-white border-black/5 hover:border-black/20 text-black shadow-sm'}`}
+                      className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-neutral-100 border-transparent text-black/20' : 'bg-white border-black/5 hover:border-black/20 text-black shadow-sm'}`}
                       onClick={() => toggleTask(task.id)}
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${task.done ? 'bg-black border-black scale-90' : 'border-black/10'}`}>
-                          {task.done && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                          {task.done && <CheckCircle size={12} weight="fill" className="text-white" />}
                         </div>
-                        <span className={`text-base font-semibold tracking-tight ${task.done ? 'line-through opacity-50' : ''}`}>
+                        <span className={`text-base font-semibold tracking-tight ${task.done ? 'line-through' : ''}`}>
                           {task.text}
                         </span>
                       </div>
@@ -267,7 +268,7 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
   );
 }
 
-// 2. Study Section — Black Mamba Aesthetic
+// 2. Study Section — Zen Minimalist Aesthetic
 function StudySection() {
   return (
     <section
@@ -279,7 +280,7 @@ function StudySection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter text-white mb-8 leading-none"
+          className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter text-white mb-8 leading-none selection:bg-white selection:text-black"
         >
           Estudos
         </motion.h2>
@@ -454,15 +455,28 @@ export function SectionsLayout() {
   // Load Tasks
   useEffect(() => {
     const saved = localStorage.getItem('routine_tasks');
+    let initialTasks = [];
     if (saved) {
-      setTasks(JSON.parse(saved));
+      initialTasks = JSON.parse(saved);
     } else {
-      setTasks([
+      initialTasks = [
         { id: '1', text: 'Review Next.js Docs', done: false },
         { id: '2', text: 'Workout Session', done: false },
         { id: '3', text: 'Read "Atomic Habits"', done: false },
-      ]);
+      ];
     }
+
+    // Auto-delete logic: Filter tasks older than 5 days
+    const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const filteredTasks = initialTasks.filter((t: Task) => {
+      if (t.done && t.completedAt) {
+        return now - t.completedAt < FIVE_DAYS_MS;
+      }
+      return true;
+    });
+
+    setTasks(filteredTasks);
     setIsLoaded(true);
   }, []);
 
@@ -475,7 +489,13 @@ export function SectionsLayout() {
 
   const toggleTask = (id: string) => {
     setTasks(prev => {
-      const updated = prev.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      const updated = prev.map(t => {
+        if (t.id === id) {
+          const isDone = !t.done;
+          return { ...t, done: isDone, completedAt: isDone ? Date.now() : undefined };
+        }
+        return t;
+      });
       return [...updated].sort((a, b) => Number(a.done) - Number(b.done));
     });
   };
