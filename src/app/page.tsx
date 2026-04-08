@@ -16,7 +16,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="flex flex-col items-center justify-start min-h-screen relative w-full bg-white selection:bg-azure-500 selection:text-white">
+    <main className="flex flex-col items-center justify-start min-h-screen relative w-full bg-white selection:bg-black selection:text-white">
       <Hero />
       <HighlightsCarousel />
       <SectionsLayout />

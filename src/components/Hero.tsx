@@ -11,21 +11,11 @@ export function Hero() {
   return (
     <>
       {/* ─── Screen 1: APENAS o anjo ─────────────────────────────── */}
-      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden bg-white">
 
-        {/* Blobs de fundo */}
+        {/* Blobs Removidos - Design Minimalista B&W */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], x: [0, 50, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute top-[-10%] left-[-5%] w-[60vw] h-[60vw] bg-azure-500/10 rounded-full blur-[120px]"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.3, 1], x: [0, -30, 0] }}
-            transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute bottom-[-10%] right-[-5%] w-[50vw] h-[50vw] bg-azure-400/10 rounded-full blur-[100px]"
-          />
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none mix-blend-overlay" />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] pointer-events-none mix-blend-overlay" />
         </div>
 
         {/* Anjo com parallax */}
@@ -40,7 +30,7 @@ export function Hero() {
             }}
             src="/icarus.png"
             alt="Charles Brain OS"
-            className="w-56 md:w-80 lg:w-[440px] object-contain mix-blend-multiply opacity-95 drop-shadow-xl"
+            className="w-56 md:w-80 lg:w-[440px] object-contain mix-blend-multiply opacity-90 grayscale"
           />
         </motion.div>
 
@@ -54,14 +44,14 @@ export function Hero() {
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-[1px] h-10 bg-black/30"
+            className="w-[1px] h-10 bg-black/10"
           />
-          <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-black/30">scroll</span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-black/20">scroll</span>
         </motion.div>
       </section>
 
       {/* ─── Screen 2: Título + CTA ───────────────────────────────── */}
-      <section className="relative w-full min-h-screen flex items-center justify-center px-6 py-32 overflow-hidden">
+      <section className="relative w-full min-h-screen flex items-center justify-center px-6 py-32 overflow-hidden bg-white">
         <div className="max-w-4xl w-full flex flex-col items-center text-center gap-8 relative z-10">
 
           <motion.h1
@@ -69,7 +59,7 @@ export function Hero() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.25 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-7xl md:text-9xl lg:text-[11rem] font-bold tracking-tighter leading-[0.85] text-transparent bg-clip-text bg-gradient-to-br from-titanium-100 via-titanium-100 to-azure-500 pb-4"
+            className="text-7xl md:text-9xl lg:text-[11rem] font-bold tracking-tighter leading-[0.85] text-black pb-4"
           >
             Charles <br />
             Brain OS.
@@ -80,7 +70,7 @@ export function Hero() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="text-2xl md:text-3xl text-titanium-300 max-w-2xl font-light leading-relaxed"
+            className="text-2xl md:text-3xl text-black/40 max-w-2xl font-light leading-relaxed"
           >
             Uma extensão mental.
           </motion.p>
@@ -93,7 +83,7 @@ export function Hero() {
             className="mt-4"
           >
             <Link href="/inbox">
-              <button className="px-10 py-5 bg-azure-500 text-white rounded-full font-bold tracking-widest uppercase hover:bg-azure-600 transition-all shadow-xl shadow-azure-500/20 hover:scale-105 active:scale-95">
+              <button className="px-10 py-5 bg-black text-white rounded-full font-bold tracking-widest uppercase hover:bg-gray-900 transition-all shadow-xl shadow-black/10 hover:scale-105 active:scale-95">
                 Iniciar Sistema
               </button>
             </Link>

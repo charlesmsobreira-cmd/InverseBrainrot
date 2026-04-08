@@ -126,13 +126,13 @@ const RecommendationModal = ({ isOpen, onClose, onSave, recommendation, isSaved 
             whileTap={isSaved ? {} : { scale: 0.97 }}
             className={`mt-10 w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 transition-all duration-500 ${
               isSaved
-                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 cursor-default'
+                ? 'bg-white/5 text-white/20 border border-white/10 cursor-default'
                 : 'bg-white text-black hover:bg-white/90 shadow-xl cursor-pointer'
             }`}
           >
             {isSaved ? (
               <>
-                <CheckCircle size={18} weight="fill" />
+                <CheckCircle size={18} weight="fill" className="text-emerald-400" />
                 Sugestão Salva
               </>
             ) : (
@@ -171,7 +171,7 @@ interface RoutineSectionProps {
 // 1. Routine Section — Card Aesthetic (Refined Colors)
 function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) {
   return (
-    <section id="rotina" className="w-full bg-[#f8f7f4] py-32 border-b border-black/[0.04] relative overflow-hidden">
+    <section id="rotina" className="w-full bg-white py-32 border-b border-black/[0.04] relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-24 items-start">
         
         {/* Left Col — Narrative */}
@@ -179,7 +179,7 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
           <motion.h2 
             initial={{ opacity: 0, x: -30 }} 
             whileInView={{ opacity: 1, x: 0 }} 
-            className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-4"
+            className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter text-black mb-4 leading-none"
           >
             Rotina
           </motion.h2>
@@ -187,7 +187,7 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
             initial={{ opacity: 0, y: 20 }} 
             whileInView={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.2 }}
-            className="text-lg text-titanium-400 max-w-md leading-relaxed font-medium"
+            className="text-lg text-black/40 max-w-md leading-relaxed font-medium"
           >
             A consistência é o único atalho para a maestria. Mantenha o ritmo inabalável.
           </motion.p>
@@ -195,7 +195,7 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
             <motion.button 
               whileHover={{ scale: 1.05 }} 
               whileTap={{ scale: 0.95 }} 
-              className="mt-10 px-8 py-4 border border-black/10 text-black font-bold tracking-[0.2em] uppercase text-[10px] flex items-center gap-3 rounded-full hover:bg-black hover:text-white transition-all shadow-sm"
+              className="mt-10 px-8 py-4 border border-black/10 text-black font-bold tracking-[0.2em] uppercase text-[10px] flex items-center gap-3 rounded-full hover:bg-black hover:text-white transition-all"
             >
               Agenda Completa
               <ArrowRight size={14} />
@@ -229,11 +229,11 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                      className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-black/[0.03] border-transparent text-titanium-400' : 'bg-white border-black/5 hover:border-black/20 text-titanium-100 shadow-sm hover:shadow-md'}`}
+                      className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-black/[0.02] border-transparent text-black/30' : 'bg-white border-black/5 hover:border-black/20 text-black shadow-sm'}`}
                       onClick={() => toggleTask(task.id)}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${task.done ? 'bg-black border-black scale-90' : 'border-black/20'}`}>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${task.done ? 'bg-black border-black scale-90' : 'border-black/10'}`}>
                           {task.done && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                         </div>
                         <span className={`text-base font-semibold tracking-tight ${task.done ? 'line-through opacity-50' : ''}`}>
@@ -242,7 +242,7 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                        className="opacity-0 group-hover/item:opacity-100 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-titanium-400 hover:text-red-500 hover:bg-red-500/5 transition-all"
+                        className="opacity-0 group-hover/item:opacity-100 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-black/20 hover:text-black transition-all"
                       >
                         <Trash size={14} />
                       </button>
@@ -252,7 +252,7 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
               </div>
 
               {tasks.length === 0 && (
-                <div className="py-20 flex flex-col items-center justify-center gap-4 text-titanium-400 opacity-20">
+                <div className="py-20 flex flex-col items-center justify-center gap-4 text-black/10">
                   <span className="text-xs font-black uppercase tracking-widest text-center">Protocolo Finalizado</span>
                 </div>
               )}
@@ -272,16 +272,8 @@ function StudySection() {
   return (
     <section
       id="estudos"
-      className="w-full py-48 border-b border-white/[0.04] relative overflow-hidden flex items-center justify-center"
-      style={{
-        backgroundColor: '#080808',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Cpath d='M20 0 L40 12 L20 24 L0 12 Z' fill='none' stroke='%23ffffff' stroke-width='0.5' stroke-opacity='0.1'/%3E%3C/svg%3E")`,
-        backgroundSize: '40px 24px',
-      }}
+      className="w-full py-48 border-b border-black/[0.04] relative overflow-hidden flex items-center justify-center bg-black"
     >
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-white/[0.02] rounded-full blur-[140px]" />
-      </div>
       <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center relative z-10">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -295,7 +287,7 @@ function StudySection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="text-xl md:text-2xl text-white/40 max-w-3xl leading-relaxed mb-12"
+          className="text-xl md:text-2xl text-white/30 max-w-3xl leading-relaxed mb-12"
         >
           O aprendizado exige controle absoluto e disciplina imperdoável.
         </motion.p>
@@ -303,7 +295,7 @@ function StudySection() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-12 py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-full hover:bg-white/90 transition-all shadow-2xl shadow-white/5"
+            className="px-12 py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-full hover:bg-white/90 transition-all"
           >
             Abrir Cadernos
           </motion.button>
@@ -318,148 +310,35 @@ function FinanceSection() {
   return (
     <section 
       id="financas" 
-      className="w-full bg-[#fcfcfc] py-48 border-b border-black/[0.04] relative overflow-hidden flex items-center"
+      className="w-full bg-white py-48 border-b border-black/[0.04] relative overflow-hidden flex items-center justify-center text-center"
     >
-      {/* Architectural Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Vertical thin line separating the layout */}
-        <div className="absolute left-[35%] top-0 bottom-0 w-px bg-black/[0.03]" />
-        
-        {/* Curator Label */}
-        <div className="absolute top-12 left-12 flex items-center gap-4">
-          <span className="text-[10px] font-black tracking-[0.4em] text-titanium-400/30 uppercase italic">03 FIN</span>
-          <div className="w-12 h-px bg-black/[0.05]" />
-          <span className="text-[10px] font-bold tracking-[0.2em] text-titanium-400/20 uppercase">Wealth & Assets</span>
-        </div>
-      </div>
-
-      <div className="max-w-[1400px] mx-auto px-6 md:px-24 w-full grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-24 items-center">
-        
-        {/* Left Col — Narrative (3 cols) */}
-        <div className="md:col-span-4 z-10">
-          <motion.h2 
-            initial={{ opacity: 0, x: -30 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
-            transition={{ duration: 0.8 }}
-            className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-8"
+      <div className="max-w-4xl mx-auto px-6 w-full flex flex-col items-center">
+        <motion.h2 
+          initial={{ opacity: 0, y: 30 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.8 }}
+          className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter text-black mb-8 leading-none"
+        >
+          Finanças
+        </motion.h2>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-lg text-black/40 max-w-lg leading-relaxed mb-10 font-medium"
+        >
+          Soberania financeira através de alocação meticulosa e controle absoluto de fluxo.
+        </motion.p>
+        <Link href="/financas">
+          <motion.button 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }} 
+            className="group px-10 py-5 bg-black text-white font-bold tracking-[0.2em] uppercase text-[10px] flex items-center gap-3 rounded-full transition-all"
           >
-            Finanças
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg text-titanium-400 max-w-xs leading-relaxed mb-10 font-medium"
-          >
-            Soberania financeira através de alocação meticulosa e controle absoluto de fluxo.
-          </motion.p>
-          <Link href="/financas">
-            <motion.button 
-              whileHover={{ scale: 1.05 }} 
-              whileTap={{ scale: 0.95 }} 
-              className="group px-8 py-4 bg-black text-white font-bold tracking-[0.2em] uppercase text-[10px] flex items-center gap-3 rounded-full shadow-2xl transition-all"
-            >
-              Consultar Custódia
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </motion.button>
-          </Link>
-        </div>
-
-        {/* Right Col — The "Vault" Visual (8 cols) */}
-        <div className="md:col-span-8 relative">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="bg-white rounded-[2rem] p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.06)] border border-black/5 relative overflow-hidden"
-          >
-            {/* Background pattern in the card */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-azure-500/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-titanium-400/50 mb-3">Patrimônio Líquido Total</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-titanium-100/40">R$</span>
-                  <span className="text-6xl md:text-7xl font-black tracking-tighter text-titanium-100">14.290,55</span>
-                </div>
-              </div>
-              
-              <div className="flex flex-col items-end text-right">
-                <div className="flex items-center gap-2 text-emerald-500 font-bold mb-1">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-sm">+12.4%</span>
-                </div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-titanium-400/40 italic">Crescimento Mensal</p>
-              </div>
-            </div>
-
-            {/* Premium Sparkline */}
-            <div className="relative h-48 w-full mt-10">
-              <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
-                <defs>
-                  <linearGradient id="sparkline-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                
-                {/* Area under the line */}
-                <motion.path
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  transition={{ duration: 1.5, delay: 0.5 }}
-                  d="M0 40 L10 32 L25 35 L40 20 L55 25 L70 10 L85 15 L100 5 L100 40 Z"
-                  fill="url(#sparkline-grad)"
-                />
-                
-                {/* The growth line */}
-                <motion.path
-                  fill="none"
-                  stroke="#2563eb"
-                  strokeWidth="0.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  initial={{ pathLength: 0 }}
-                  whileInView={{ pathLength: 1 }}
-                  transition={{ duration: 2, ease: "easeInOut" }}
-                  d="M0 40 L10 32 L25 35 L40 20 L55 25 L70 10 L85 15 L100 5"
-                />
-                
-                {/* Points */}
-                <motion.circle 
-                  cx="100" cy="5" r="1.5" fill="#2563eb" 
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 2 }}
-                />
-              </svg>
-              
-              {/* Vertical Metric Separators */}
-              <div className="absolute bottom-0 left-0 right-0 flex justify-between px-2 pt-4 border-t border-black/[0.03]">
-                {['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN'].map(m => (
-                  <span key={m} className="text-[8px] font-black text-black/10 tracking-widest">{m}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Bottom Metrics Bar */}
-            <div className="mt-12 pt-8 border-t border-black/[0.03] grid grid-cols-3 gap-8">
-              <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-titanium-400/40 mb-2">Liquidez</p>
-                <p className="text-sm font-bold text-titanium-100 italic">Alta</p>
-              </div>
-              <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-titanium-400/40 mb-2">AUM</p>
-                <p className="text-sm font-bold text-titanium-100">82.1k</p>
-              </div>
-              <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-titanium-400/40 mb-2">Status</p>
-                <p className="text-[8px] font-bold text-black bg-emerald-500/10 px-2 py-1 rounded inline-block">ATIVO</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+            Consultar Custódia
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </motion.button>
+        </Link>
       </div>
     </section>
   );
@@ -505,161 +384,50 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
     if (currentRec && !savedTitles.includes(currentRec.title)) {
       setSavedTitles(prev => [...prev, currentRec.title]);
     }
+    // Fecha o modal após um pequeno delay para mostrar o estado de "Salvo"
+    setTimeout(() => {
+      setModalOpen(false);
+    }, 1200);
   };
-
-  const artworks = [
-    { src: '/consumo/art1.png', title: 'A Grande Onda', artist: 'Hokusai', year: '1831' },
-    { src: '/consumo/art2.png', title: 'Reverie', artist: 'Desconhecido', year: '2023' },
-    { src: '/consumo/art3.png', title: 'Bloom', artist: 'Anônimo', year: '2022' },
-    { src: '/consumo/art4.png', title: 'Les Amants', artist: 'Magritte', year: '1928' },
-  ];
 
   return (
     <section
       id="consumo"
-      className="w-full relative overflow-hidden pb-0"
-      style={{
-        // Museum wall: warm limestone with subtle texture
-        background: `
-          linear-gradient(
-            to bottom,
-            #e8e0d4 0%,
-            #ddd5c8 40%,
-            #c8bfb0 70%,
-            #b5aa9a 100%
-          )
-        `,
-      }}
+      className="w-full relative overflow-hidden pb-48 bg-black flex items-center justify-center text-center border-b border-white/[0.04]"
     >
-      {/* Architectural wall details */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Subtle stone texture overlay */}
-        <div className="absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='200' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat',
-          }}
-        />
-        {/* Dado rail / wainscoting — horizontal molding line */}
-        <div className="absolute left-0 right-0" style={{ top: '62%' }}>
-          <div className="w-full h-[3px] bg-[#9e917f]/60" />
-          <div className="w-full h-[1px] bg-white/30 mt-[2px]" />
-          <div className="w-full h-[1px] bg-[#9e917f]/30 mt-[3px]" />
-        </div>
-        {/* Lower wall panel — slightly darker below dado rail */}
-        <div className="absolute left-0 right-0 bottom-0" style={{ top: '62%', background: 'linear-gradient(to bottom, #b5aa9a, #a09080)' }} />
-        {/* Ceiling cornice shadow */}
-        <div className="absolute top-0 left-0 right-0 h-16" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.18), transparent)' }} />
-        {/* Floor shadow from bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-24" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.25), transparent)' }} />
-        {/* Parquet floor hint at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-20"
-          style={{
-            background: 'repeating-linear-gradient(90deg, rgba(139,108,71,0.15) 0px, rgba(139,108,71,0.15) 48px, rgba(160,128,88,0.12) 48px, rgba(160,128,88,0.12) 96px)',
-          }}
-        />
-      </div>
-
-      {/* Gallery layout */}
-      <div className="relative z-10 pt-20 pb-40">
-        <div className="max-w-[1500px] mx-auto px-6 md:px-20 flex flex-col md:flex-row items-center justify-between gap-20 min-h-[520px]">
-
-          {/* Left — Museum wall with hanging artworks */}
-          <div className="order-2 md:order-1 relative flex items-center justify-start flex-1 md:ml-[-5%]" style={{ minHeight: '480px' }}>
-            {/* Hanging wire line */}
-            <div className="absolute top-8 left-0 right-0 h-px bg-[#8a7a68]/40"
-              style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.15)' }}
-            />
-
-            {/* Artworks row — hung on the wall */}
-            <div className="flex items-end justify-start gap-20 pt-12 pb-4 w-full">
-              {artworks.map((art, i) => {
-                const frameSize = 'w-48 h-64';
-
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: -30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ type: 'spring', stiffness: 80, damping: 18, delay: i * 0.12 }}
-                    className="relative flex-shrink-0"
-                    style={{ transformOrigin: 'top center' }}
-                  >
-                    {/* Hanging wire from rail to frame */}
-                    <div className="absolute left-1/2 -top-12 w-px bg-[#8a7a68]/50" style={{ height: '48px', transform: 'translateX(-50%)' }} />
-                    <div className="absolute left-1/2 -top-12 w-1 h-1 rounded-full bg-[#c8b89a] border border-[#8a7a68]/60" style={{ transform: 'translate(-50%, -2px)' }} />
-
-                    {/* Picture frame */}
-                    <div
-                      className={`${frameSize} relative`}
-                      style={{
-                        // Gold ornate frame effect via box-shadow
-                        boxShadow: `
-                          0 0 0 3px #b8a07a,
-                          0 0 0 6px #8a6e40,
-                          0 0 0 9px #c8b07a,
-                          0 0 0 12px #7a5e30,
-                          8px 20px 40px rgba(0,0,0,0.55),
-                          0 6px 12px rgba(0,0,0,0.3)
-                        `,
-                        borderRadius: '2px',
-                      }}
-                    >
-                      {/* Spotlight / gallery light glow above painting */}
-                      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-32 h-24 pointer-events-none"
-                        style={{
-                          background: 'radial-gradient(ellipse at 50% 0%, rgba(255,240,180,0.35) 0%, transparent 80%)',
-                          filter: 'blur(8px)',
-                        }}
-                      />
-
-                      {/* Mat / passepartout */}
-                      <div className="absolute inset-0 bg-[#f5f0e8] p-3">
-                        <img
-                          src={art.src}
-                          alt={art.title}
-                          className="w-full h-full object-cover"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                            (e.target as HTMLImageElement).src = `https://placehold.co/300x400/2a2015/c8b07a?text=${encodeURIComponent(art.title)}`;
-                          }}
-                        />
-                      </div>
-
-                      {/* Painting surface gloss */}
-                      <div className="absolute inset-3 pointer-events-none"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%)',
-                        }}
-                      />
-                    </div>
-
-                    {/* Museum placard below painting */}
-                    <div className="mt-5 flex flex-col items-center gap-0.5">
-                      <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/90">{art.title}</span>
-                      <span className="text-[8px] italic text-white/60">{art.artist}, {art.year}</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right — Text & Buttons (unchanged) */}
-          <div className="order-1 md:order-2 z-10 flex flex-col md:items-end md:text-right justify-center py-20">
-            <motion.h2 initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Consumo</motion.h2>
-            <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed">O que você consome molda sua mente.</motion.p>
-            <div className="mt-8 flex gap-4 md:justify-end items-center">
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleOpenModal}
-                className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-gray-900 transition-colors cursor-pointer text-white bg-black shadow-lg"
-              >
-                <Coffee size={24} />
-              </motion.div>
-              <Link href="/consumo"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-8 py-0 h-12 bg-black text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-gray-900 transition-colors rounded-full shadow-lg">Galeria</motion.button></Link>
-            </div>
-          </div>
+      <div className="max-w-4xl mx-auto px-6 z-10 py-20 flex flex-col items-center">
+        <motion.h2 
+          initial={{ opacity: 0, y: 30 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter text-white mb-6 leading-none"
+        >
+          Consumo
+        </motion.h2>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          className="text-lg text-white/30 max-w-md leading-relaxed mb-10"
+        >
+          O que você consome molda sua mente.
+        </motion.p>
+        <div className="flex gap-4 items-center">
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleOpenModal}
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-white text-black cursor-pointer shadow-xl"
+          >
+            <Coffee size={28} />
+          </motion.div>
+          <Link href="/consumo">
+            <motion.button 
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.95 }} 
+              className="px-12 py-0 h-14 bg-white text-black font-bold tracking-widest uppercase text-sm flex items-center justify-center rounded-full shadow-xl"
+            >
+              Galeria
+            </motion.button>
+          </Link>
         </div>
       </div>
 
@@ -675,7 +443,6 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
         )}
       </AnimatePresence>
     </section>
-
   );
 }
 

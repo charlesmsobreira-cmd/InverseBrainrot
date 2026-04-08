@@ -113,8 +113,8 @@ export function Navigation() {
                 onMouseLeave={() => setHovered(null)}
                 className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-colors duration-200 ${
                   isActive
-                    ? 'text-azure-500'
-                    : 'text-titanium-400 hover:text-azure-500'
+                    ? 'text-black'
+                    : 'text-black/30 hover:text-black'
                 }`}
                 whileHover={{ scale: 1.22, y: -5 }}
                 whileTap={{ scale: 0.92 }}
@@ -123,7 +123,7 @@ export function Navigation() {
                 {isActive && (
                   <motion.div
                     layoutId="active-nav"
-                    className="absolute inset-0 bg-azure-500/10 rounded-full border border-azure-500/20 shadow-[0_4px_12px_rgba(0,113,227,0.08)]"
+                    className="absolute inset-0 bg-black/5 rounded-full border border-black/10 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                   />
                 )}

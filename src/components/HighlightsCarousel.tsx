@@ -158,7 +158,7 @@ export function HighlightsCarousel() {
              whileInView={{ opacity: 1, y: 0 }}
              viewport={{ once: false }}
              transition={{ delay: 0.1 }}
-             className="text-4xl md:text-5xl font-bold tracking-tight text-titanium-100"
+             className="text-4xl md:text-5xl font-bold tracking-tight text-black"
            >
              Comece pelos destaques.
            </motion.h2>
@@ -251,9 +251,9 @@ export function HighlightsCarousel() {
                   <div className="flex gap-1 text-black/20">
                     {[1,2,3,4,5].map(s => {
                       const r = item.rating || 0;
-                      if (r >= s)       return <Star     key={s} size={14} weight="fill" className="text-azure-500" />;
-                      if (r >= s - 0.5) return <StarHalf key={s} size={14} weight="fill" className="text-azure-500" />;
-                      return              <Star     key={s} size={14} weight="fill" className="opacity-20" />;
+                      if (r >= s)       return <Star     key={s} size={14} weight="fill" className="text-black" />;
+                      if (r >= s - 0.5) return <StarHalf key={s} size={14} weight="fill" className="text-black" />;
+                      return              <Star     key={s} size={14} weight="fill" className="opacity-10" />;
                     })}
                   </div>
 
