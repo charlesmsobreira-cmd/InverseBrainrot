@@ -284,28 +284,152 @@ function StudySection() {
   );
 }
 
-// 3. Finance Section
+// 3. Finance Section — Swiss Bank Architecture
 function FinanceSection() {
   return (
-    <section id="financas" className="w-full bg-white py-32 border-b border-black/[0.05] relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-        <div className="z-10">
-          <motion.h2 initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Finanças</motion.h2>
-          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed">A alocação pragmática de recursos é o que define o amanhã.</motion.p>
-          <Link href="/financas"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-8 px-8 py-4 bg-titanium-100 text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-black transition-colors rounded-full">Análise Completa</motion.button></Link>
+    <section 
+      id="financas" 
+      className="w-full bg-[#fcfcfc] py-48 border-b border-black/[0.04] relative overflow-hidden flex items-center"
+    >
+      {/* Architectural Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Vertical thin line separating the layout */}
+        <div className="absolute left-[35%] top-0 bottom-0 w-px bg-black/[0.03]" />
+        
+        {/* Curator Label */}
+        <div className="absolute top-12 left-12 flex items-center gap-4">
+          <span className="text-[10px] font-black tracking-[0.4em] text-titanium-400/30 uppercase italic">03 FIN</span>
+          <div className="w-12 h-px bg-black/[0.05]" />
+          <span className="text-[10px] font-bold tracking-[0.2em] text-titanium-400/20 uppercase">Wealth & Assets</span>
         </div>
-        <div className="relative">
-          <div className="p-10 glass-panel rounded-3xl group">
-            <div className="mb-8">
+      </div>
+
+      <div className="max-w-[1400px] mx-auto px-6 md:px-24 w-full grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-24 items-center">
+        
+        {/* Left Col — Narrative (3 cols) */}
+        <div className="md:col-span-4 z-10">
+          <motion.h2 
+            initial={{ opacity: 0, x: -30 }} 
+            whileInView={{ opacity: 1, x: 0 }} 
+            transition={{ duration: 0.8 }}
+            className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-8"
+          >
+            Finanças
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }} 
+            whileInView={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-lg text-titanium-400 max-w-xs leading-relaxed mb-10 font-medium"
+          >
+            Soberania financeira através de alocação meticulosa e controle absoluto de fluxo.
+          </motion.p>
+          <Link href="/financas">
+            <motion.button 
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.95 }} 
+              className="group px-8 py-4 bg-black text-white font-bold tracking-[0.2em] uppercase text-[10px] flex items-center gap-3 rounded-full shadow-2xl transition-all"
+            >
+              Consultar Custódia
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </motion.button>
+          </Link>
+        </div>
+
+        {/* Right Col — The "Vault" Visual (8 cols) */}
+        <div className="md:col-span-8 relative">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="bg-white rounded-[2rem] p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.06)] border border-black/5 relative overflow-hidden"
+          >
+            {/* Background pattern in the card */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-azure-500/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
               <div>
-                <h3 className="text-xl font-semibold text-titanium-400 uppercase tracking-wider text-sm mb-1">Patrimônio Líquido</h3>
-                <div className="text-5xl font-mono text-titanium-100 font-bold">R$ 14.290,55</div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-titanium-400/50 mb-3">Patrimônio Líquido Total</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-titanium-100/40">R$</span>
+                  <span className="text-6xl md:text-7xl font-black tracking-tighter text-titanium-100">14.290,55</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-end text-right">
+                <div className="flex items-center gap-2 text-emerald-500 font-bold mb-1">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-sm">+12.4%</span>
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-titanium-400/40 italic">Crescimento Mensal</p>
               </div>
             </div>
-            <div className="h-32 w-full flex items-end gap-3 mt-4 px-2">
-              {[40, 25, 60, 45, 80, 50, 90, 75, 100].map((h, i) => <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} transition={{ type: 'spring', damping: 15, delay: i * 0.05 }} className="flex-1 bg-azure-500/10 rounded-t-sm hover:bg-azure-500 transition-colors" />)}
+
+            {/* Premium Sparkline */}
+            <div className="relative h-48 w-full mt-10">
+              <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
+                <defs>
+                  <linearGradient id="sparkline-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                
+                {/* Area under the line */}
+                <motion.path
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 1.5, delay: 0.5 }}
+                  d="M0 40 L10 32 L25 35 L40 20 L55 25 L70 10 L85 15 L100 5 L100 40 Z"
+                  fill="url(#sparkline-grad)"
+                />
+                
+                {/* The growth line */}
+                <motion.path
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth="0.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0 }}
+                  whileInView={{ pathLength: 1 }}
+                  transition={{ duration: 2, ease: "easeInOut" }}
+                  d="M0 40 L10 32 L25 35 L40 20 L55 25 L70 10 L85 15 L100 5"
+                />
+                
+                {/* Points */}
+                <motion.circle 
+                  cx="100" cy="5" r="1.5" fill="#2563eb" 
+                  initial={{ opacity: 0, scale: 0 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 2 }}
+                />
+              </svg>
+              
+              {/* Vertical Metric Separators */}
+              <div className="absolute bottom-0 left-0 right-0 flex justify-between px-2 pt-4 border-t border-black/[0.03]">
+                {['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN'].map(m => (
+                  <span key={m} className="text-[8px] font-black text-black/10 tracking-widest">{m}</span>
+                ))}
+              </div>
             </div>
-          </div>
+
+            {/* Bottom Metrics Bar */}
+            <div className="mt-12 pt-8 border-t border-black/[0.03] grid grid-cols-3 gap-8">
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-titanium-400/40 mb-2">Liquidez</p>
+                <p className="text-sm font-bold text-titanium-100 italic">Alta</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-titanium-400/40 mb-2">AUM</p>
+                <p className="text-sm font-bold text-titanium-100">82.1k</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-titanium-400/40 mb-2">Status</p>
+                <p className="text-[8px] font-bold text-black bg-emerald-500/10 px-2 py-1 rounded inline-block">ATIVO</p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>
