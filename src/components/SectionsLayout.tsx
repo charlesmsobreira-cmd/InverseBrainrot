@@ -408,18 +408,18 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
       </div>
 
       {/* Gallery layout */}
-      <div className="relative z-10 pt-20 pb-32">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 grid grid-cols-1 md:grid-cols-2 gap-0 items-start min-h-[520px]">
+      <div className="relative z-10 pt-20 pb-40">
+        <div className="max-w-[1500px] mx-auto px-6 md:px-20 flex flex-col md:flex-row items-center justify-between gap-20 min-h-[520px]">
 
           {/* Left — Museum wall with hanging artworks */}
-          <div className="order-2 md:order-1 relative flex items-center justify-center" style={{ minHeight: '480px' }}>
+          <div className="order-2 md:order-1 relative flex items-center justify-start flex-1 md:ml-[-5%]" style={{ minHeight: '480px' }}>
             {/* Hanging wire line */}
-            <div className="absolute top-8 left-[10%] right-[10%] h-px bg-[#8a7a68]/40"
+            <div className="absolute top-8 left-0 right-0 h-px bg-[#8a7a68]/40"
               style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.15)' }}
             />
 
             {/* Artworks row — hung on the wall */}
-            <div className="flex items-end justify-center gap-16 pt-12 pb-4 w-full">
+            <div className="flex items-end justify-start gap-20 pt-12 pb-4 w-full">
               {artworks.map((art, i) => {
                 const frameSize = 'w-48 h-64';
 
@@ -429,7 +429,6 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
                     initial={{ opacity: 0, y: -30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ type: 'spring', stiffness: 80, damping: 18, delay: i * 0.12 }}
-                    whileHover={{ y: -6, scale: 1.04, zIndex: 30 }}
                     className="relative flex-shrink-0"
                     style={{ transformOrigin: 'top center' }}
                   >
@@ -483,8 +482,8 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
 
                     {/* Museum placard below painting */}
                     <div className="mt-5 flex flex-col items-center gap-0.5">
-                      <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#4a3e2e]/80">{art.title}</span>
-                      <span className="text-[8px] italic text-[#4a3e2e]/55">{art.artist}, {art.year}</span>
+                      <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/90">{art.title}</span>
+                      <span className="text-[8px] italic text-white/60">{art.artist}, {art.year}</span>
                     </div>
                   </motion.div>
                 );
@@ -496,12 +495,12 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
           <div className="order-1 md:order-2 z-10 flex flex-col md:items-end md:text-right justify-center py-20">
             <motion.h2 initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Consumo</motion.h2>
             <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed">O que você consome molda sua mente.</motion.p>
-            <div className="mt-8 flex gap-4 md:justify-end">
+            <div className="mt-8 flex gap-4 md:justify-end items-center">
               <motion.div
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleOpenModal}
-                className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-colors cursor-pointer text-azure-500 bg-white"
+                className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-gray-900 transition-colors cursor-pointer text-white bg-black shadow-lg"
               >
                 <Coffee size={24} />
               </motion.div>
