@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Kalam } from "next/font/google";
+import { Outfit, Kalam, Birthstone } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -12,6 +12,12 @@ const kalam = Kalam({
   subsets: ["latin"],
   variable: "--font-kalam",
   weight: ["400", "700"],
+});
+
+const signature = Birthstone({
+  subsets: ["latin"],
+  variable: "--font-signature",
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${kalam.variable}`}>
+    <html lang="en" className={`${outfit.variable} ${kalam.variable} ${signature.variable}`}>
       <body className="font-sans antialiased bg-white text-black">
         <div className="min-h-[100dvh] transition-all duration-300">
           {children}

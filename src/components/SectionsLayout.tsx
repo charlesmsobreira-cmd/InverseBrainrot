@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ArrowRight, X, Sparkle, MusicNotes, BookmarkSimple, FilmStrip, Coffee, FloppyDisk, Trash } from '@phosphor-icons/react';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Footer } from './Footer';
 
 // --- Interfaces ---
 interface Recommendation {
@@ -394,9 +395,9 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
   return (
     <section
       id="consumo"
-      className="w-full relative overflow-hidden pb-48 bg-black flex items-center justify-center text-center border-b border-white/[0.04]"
+      className="w-full relative overflow-hidden py-64 min-h-[90vh] bg-black flex items-center justify-center text-center font-outfit"
     >
-      <div className="max-w-4xl mx-auto px-6 z-10 py-20 flex flex-col items-center">
+      <div className="max-w-4xl mx-auto px-6 z-10 flex flex-col items-center">
         <motion.h2 
           initial={{ opacity: 0, y: 30 }} 
           whileInView={{ opacity: 1, y: 0 }} 
@@ -519,6 +520,7 @@ export function SectionsLayout() {
       <StudySection />
       <FinanceSection />
       <ConsumeSection addTask={addTask} />
+      <Footer />
     </>
   );
 }
