@@ -17,7 +17,7 @@ export default function StudyPage() {
           whileHover={{ x: -10 }}
           className="flex items-center gap-3 px-8 py-4 border border-white/10 rounded-full text-zinc-500 hover:text-white font-black uppercase tracking-[0.3em] text-[10px] transition-all bg-black shadow-2xl backdrop-blur-xl"
         >
-          <ArrowLeft size={16} weight="bold" /> Sistema
+          <ArrowLeft size={16} weight="bold" /> Voltar
         </motion.button>
       </Link>
 
@@ -42,10 +42,10 @@ export default function StudyPage() {
           
           <div className="h-full w-full flex flex-col justify-center px-12 md:px-24 relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 mb-2"
+              className="flex items-center gap-2 mb-2"
             >
               <div className="w-8 h-[1px] bg-zinc-800 group-hover:w-16 group-hover:bg-white transition-all duration-700" />
               <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 group-hover:text-white transition-colors">
@@ -85,10 +85,10 @@ export default function StudyPage() {
 
           <div className="h-full w-full flex flex-col justify-center px-12 md:px-24 relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex items-center gap-4 mb-2"
+              className="flex items-center gap-2 mb-2"
             >
               <div className="w-8 h-[1px] bg-zinc-800 group-hover:w-16 group-hover:bg-white transition-all duration-700" />
               <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 group-hover:text-white transition-colors">
