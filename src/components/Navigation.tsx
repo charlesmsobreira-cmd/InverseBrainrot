@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Coffee, CurrencyDollar, CalendarCheck, DotsNine } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const navItems = [
   { id: 'overview',  icon: DotsNine,        label: 'Overview',  sectionId: null        },
@@ -15,9 +15,56 @@ const navItems = [
 export function Navigation() {
   const [active,  setActive]  = useState('overview');
   const [hovered, setHovered] = useState<string | null>(null);
+  const isScrollingRef = useRef(false);
+
+  // Auto-detect active section via IntersectionObserver (symmetric up/down)
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+
+    navItems.forEach(item => {
+      if (!item.sectionId) return;
+      const el = document.getElementById(item.sectionId);
+      if (!el) return;
+
+      // rootMargin creates a horizontal "trigger line" at 40% from the top.
+      // When a section crosses this line (in either direction), it becomes active.
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (isScrollingRef.current) return;
+            if (entry.isIntersecting) {
+              setActive(item.id);
+            }
+          });
+        },
+        {
+          rootMargin: '-40% 0px -55% 0px',
+          threshold: 0,
+        }
+      );
+
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    const onScroll = () => {
+      if (isScrollingRef.current) return;
+      if (window.scrollY < 100) setActive('overview');
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      observers.forEach(o => o.disconnect());
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
 
   const handleClick = (id: string, sectionId: string | null) => {
+    // Lock observer for 1.2s so the active state doesn't get overridden during scroll
+    isScrollingRef.current = true;
     setActive(id);
+    setTimeout(() => { isScrollingRef.current = false; }, 1200);
+
     if (sectionId) {
       const el = document.getElementById(sectionId);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -25,6 +72,7 @@ export function Navigation() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">

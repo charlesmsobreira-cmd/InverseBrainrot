@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Hourglass, WarningCircle, List, Clock, CalendarBlank, CaretUp, CaretDown } from '@phosphor-icons/react';
+import { Hourglass, WarningCircle, Clock, CalendarBlank, CaretDown, Trash } from '@phosphor-icons/react';
 import { supabase } from '@/lib/supabase';
 import { useStudyMode } from '@/context/StudyModeContext';
 
 const MAX_SESSION_MINUTES = 180; // 3 Hours
+
+// Lakers Colors
+const LAKERS_PURPLE = '#552583';
+const LAKERS_GOLD   = '#FDB927';
 
 type StudyLog = {
   id: string;
@@ -25,25 +29,43 @@ export default function StudyTimer() {
   const [showLogs, setShowLogs] = useState(false);
   const { setIsImmersive } = useStudyMode();
 
-  // Load initial state and logs from Supabase
   const loadInitialData = useCallback(async () => {
-    // 1. Load total stats
+    // ── Weekly Reset Logic ──
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Go to last Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfWeekISO = startOfWeek.toISOString();
+
     const { data: stats } = await supabase
       .from('study_stats')
       .select('*')
       .eq('category', 'Italiano')
       .single();
 
+    let currentTotal = stats?.total_minutes || 0;
+
     if (stats) {
-      setTotalMinutes(stats.total_minutes || 0);
+      // Check if last update was before this week's Sunday
+      const lastUpdate = new Date(stats.updated_at);
+      if (lastUpdate < startOfWeek) {
+        // Reset weekly counter
+        currentTotal = 0;
+        await supabase
+          .from('study_stats')
+          .update({ total_minutes: 0, updated_at: now.toISOString() })
+          .eq('category', 'Italiano');
+      }
+
+      setTotalMinutes(currentTotal);
+      
       if (stats.is_running && stats.last_run_start) {
         const started = new Date(stats.last_run_start).getTime();
-        const now = Date.now();
-        const diffSeconds = Math.floor((now - started) / 1000);
+        const diffSeconds = Math.floor((now.getTime() - started) / 1000);
         const diffMinutes = Math.floor(diffSeconds / 60);
 
         if (diffMinutes >= MAX_SESSION_MINUTES) {
-          stopTimer(stats.total_minutes + MAX_SESSION_MINUTES, true);
+          stopTimer(currentTotal + MAX_SESSION_MINUTES, true);
         } else {
           setIsRunning(true);
           setStartTime(started);
@@ -53,11 +75,12 @@ export default function StudyTimer() {
       }
     }
 
-    // 2. Load logs
+    // Only load logs from the current week
     const { data: logEntries } = await supabase
       .from('study_logs')
       .select('*')
       .eq('category', 'Italiano')
+      .gte('created_at', startOfWeekISO)
       .order('created_at', { ascending: false })
       .limit(7);
 
@@ -68,15 +91,12 @@ export default function StudyTimer() {
     loadInitialData();
   }, [loadInitialData]);
 
-  // Timer interval (1s for real-time feel)
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning && startTime) {
       interval = setInterval(() => {
         const diffSecs = Math.floor((Date.now() - startTime) / 1000);
         setSessionSeconds(diffSecs);
-
-        // Auto-stop safety
         if (diffSecs >= MAX_SESSION_MINUTES * 60) {
           stopTimer(totalMinutes + MAX_SESSION_MINUTES, true);
         }
@@ -108,20 +128,17 @@ export default function StudyTimer() {
     const newTotal = forcedTotal ?? (totalMinutes + finalSessionMinutes);
     const now = new Date().toISOString();
 
-    // Update main stats
     const { error: statsError } = await supabase
       .from('study_stats')
       .update({ is_running: false, last_run_start: null, total_minutes: newTotal, updated_at: now })
       .eq('category', 'Italiano');
 
-    // Save log if session was at least 10 seconds
     const minutesToSave = Math.max(1, Math.ceil(sessionSeconds / 60));
     if (!statsError && sessionSeconds >= 10) {
       await supabase.from('study_logs').insert([{
         category: 'Italiano',
         duration_minutes: minutesToSave
       }]);
-      // Reload logs
       const { data: newLogs } = await supabase
         .from('study_logs')
         .select('*')
@@ -145,6 +162,30 @@ export default function StudyTimer() {
     setIsSyncing(false);
   };
 
+  const deleteLog = async (id: string) => {
+    const logToDelete = logs.find(l => l.id === id);
+    if (!logToDelete) return;
+
+    const { error } = await supabase
+      .from('study_logs')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      const updatedTotal = Math.max(0, totalMinutes - logToDelete.duration_minutes);
+      
+      // Update local state
+      setLogs(prev => prev.filter(log => log.id !== id));
+      setTotalMinutes(updatedTotal);
+
+      // Update Database stats
+      await supabase
+        .from('study_stats')
+        .update({ total_minutes: updatedTotal, updated_at: new Date().toISOString() })
+        .eq('category', 'Italiano');
+    }
+  };
+
   const formatDisplayTime = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
     const m = Math.floor((totalSecs % 3600) / 60);
@@ -165,116 +206,255 @@ export default function StudyTimer() {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end gap-4 pointer-events-none">
-      {/* Logs Window */}
+    <>
+      {/* ── IMERSIVE FULL-SCREEN LAKERS OVERLAY ── */}
       <AnimatePresence>
-        {showLogs && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="w-[440px] bg-white/95 backdrop-blur-3xl rounded-[2.5rem] p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-black/5 mb-2 pointer-events-auto overflow-hidden"
+        {isRunning && (
+          <motion.div
+            key="lakers-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.8, ease: 'easeInOut' }}
+            className="fixed inset-0 pointer-events-none"
+            style={{ zIndex: 15 }}
           >
-            <div className="flex items-center gap-3 mb-8">
-              <CalendarBlank size={24} className="text-azure-500" />
-              <span className="text-sm font-black uppercase tracking-[0.2em] text-titanium-100">Histórico de Sessões</span>
-            </div>
-            
-            <div className="space-y-6 max-h-[400px] overflow-y-auto no-scrollbar pr-2">
-              {logs.length === 0 ? (
-                <div className="py-12 flex flex-col items-center gap-4 border-2 border-dashed border-black/5 rounded-3xl">
-                  <Clock size={32} className="text-titanium-300 opacity-20" />
-                  <p className="text-xs text-titanium-300 font-bold uppercase tracking-widest">Nenhum log registrado ainda</p>
-                </div>
-              ) : (
-                logs.map(log => (
-                  <div key={log.id} className="flex items-center justify-between group p-1 hover:bg-black/[0.01] rounded-2xl transition-colors">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs font-black text-titanium-100 uppercase tracking-tight">{formatDateLabel(log.created_at)}</span>
-                      <span className="text-[11px] text-titanium-400 font-mono italic">
-                        {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
-                      </span>
-                    </div>
-                    <div className="px-5 py-2.5 bg-azure-500 text-white rounded-2xl shadow-lg shadow-azure-500/20">
-                      <span className="text-sm font-mono font-black">{formatTotalTime(log.duration_minutes)}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            {/* Purple blob — full width, covers both panels */}
+            <motion.div
+              animate={{ scale: [1, 1.12, 1], x: [0, 20, 0] }}
+              transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -top-[30%] -left-[10%] w-[120vw] h-[100vh] rounded-full blur-[100px] will-change-transform"
+              style={{ backgroundColor: `${LAKERS_PURPLE}30`, transform: 'translateZ(0)' }}
+            />
+            {/* Gold blob — bottom right */}
+            <motion.div
+              animate={{ scale: [1, 1.15, 1], x: [0, -20, 0] }}
+              transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+              className="absolute -bottom-[30%] -right-[10%] w-[80vw] h-[80vh] rounded-full blur-[100px] will-change-transform"
+              style={{ backgroundColor: `${LAKERS_GOLD}12`, transform: 'translateZ(0)' }}
+            />
+            <div className="absolute inset-0 bg-black/20" />
+
+            {/* "FOCO ATIVO" badge — fixed, high z-index, truly centered */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ delay: 0.5 }}
+              className="fixed top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 pointer-events-none"
+              style={{ zIndex: 200 }}
+            >
+              <motion.span
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: LAKERS_GOLD }}
+              />
+              <span
+                className="text-[10px] font-black uppercase tracking-[0.5em] whitespace-nowrap"
+                style={{ color: LAKERS_GOLD }}
+              >
+                Foco Ativo — Mamba Mode
+              </span>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="flex items-center gap-2 pointer-events-auto">
+      {/* ── TIMER WIDGET ── */}
+      <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end gap-4 pointer-events-none">
+
+        {/* Logs Window */}
         <AnimatePresence>
-          {showNotification && (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-2xl border border-red-400"
+          {showLogs && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="w-[440px] rounded-[3.5rem] p-10 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] mb-2 pointer-events-auto overflow-hidden border"
+              style={{
+                backgroundColor: isRunning ? '#1a0a2e' : 'rgba(13,13,13,0.8)',
+                borderColor: isRunning ? `${LAKERS_PURPLE}60` : 'rgba(255,255,255,0.08)',
+                backdropFilter: 'blur(64px)',
+              }}
             >
-              <WarningCircle size={16} /> {showNotification}
+              <div className="flex items-center gap-3 mb-10">
+                <CalendarBlank
+                  size={24}
+                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
+                />
+                <span
+                  className="text-sm font-black uppercase tracking-[0.3em]"
+                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
+                >
+                  Sessões da Semana
+                </span>
+              </div>
+
+              <div className="space-y-6 max-h-[380px] overflow-y-auto no-scrollbar pr-2">
+                {logs.length === 0 ? (
+                  <div
+                    className="py-16 flex flex-col items-center gap-4 border-2 border-dashed rounded-[2.5rem]"
+                    style={{ borderColor: isRunning ? `${LAKERS_PURPLE}40` : 'rgba(255,255,255,0.05)' }}
+                  >
+                    <Clock size={40} className="opacity-10" style={{ color: 'white' }} />
+                    <p
+                      className="text-[10px] font-black uppercase tracking-widest opacity-30 text-white"
+                    >
+                      Nenhuma sessão nesta semana
+                    </p>
+                  </div>
+                ) : (
+                  logs.map(log => (
+                    <div key={log.id} className="flex items-center justify-between group p-1 transition-all">
+                      <div className="flex flex-col gap-1.5">
+                        <span
+                          className="text-xs font-black uppercase tracking-tight text-white/90"
+                        >
+                          {formatDateLabel(log.created_at)}
+                        </span>
+                        <span
+                          className="text-[10px] font-mono opacity-30 text-white italic"
+                        >
+                          {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="px-6 py-3 rounded-2xl shadow-xl transition-transform group-hover:scale-105"
+                          style={{
+                            backgroundColor: isRunning ? LAKERS_PURPLE : 'rgba(255,255,255,0.03)',
+                            border: isRunning ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                            boxShadow: isRunning ? `0 8px 32px ${LAKERS_PURPLE}60` : 'none',
+                          }}
+                        >
+                          <span className="text-[13px] font-mono font-black text-white">
+                            {formatTotalTime(log.duration_minutes)}
+                          </span>
+                        </div>
+                        
+                        {/* Delete Button - Subtle */}
+                        <button
+                          onClick={() => deleteLog(log.id)}
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white/10 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Global Stats Toggle Button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowLogs(!showLogs)}
-          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-xl transition-all ${showLogs ? 'bg-black text-white' : 'bg-white/80 text-titanium-400 border border-black/5 shadow-lg'}`}
-        >
-          {showLogs ? <CaretDown size={20} weight="bold" /> : <List size={22} weight="bold" />}
-        </motion.button>
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <AnimatePresence>
+            {showNotification && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="bg-red-500/90 backdrop-blur-xl text-white px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-3 shadow-2xl border border-red-400/50"
+              >
+                <WarningCircle size={18} weight="bold" /> {showNotification}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Timer Display Widget */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className={`glass-panel p-1.5 rounded-full flex items-center gap-3 backdrop-blur-3xl border border-white/20 shadow-2xl ${isRunning ? 'ring-2 ring-azure-500/30' : ''}`}
-        >
-          <div className="flex items-center pl-4 pr-1 gap-5">
-            <div className="flex flex-col">
-              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-titanium-400 leading-none mb-1">
-                {isRunning ? 'Sessão Ativa' : 'Total Estudado'}
-              </span>
-              <span className="text-base font-bold text-titanium-100 font-mono leading-none tracking-tighter">
-                {isRunning ? formatDisplayTime(sessionSeconds) : formatTotalTime(totalMinutes)}
-              </span>
-            </div>
+          {/* Logs Toggle */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowLogs(!showLogs)}
+            className="w-14 h-14 rounded-full flex items-center justify-center transition-all border"
+            style={{
+              backgroundColor: isRunning 
+                ? (showLogs ? LAKERS_PURPLE : 'rgba(85,37,131,0.2)') 
+                : (showLogs ? 'white' : 'rgba(255,255,255,0.05)'),
+              borderColor: isRunning ? `${LAKERS_PURPLE}80` : 'rgba(255,255,255,0.1)',
+              color: isRunning 
+                ? (showLogs ? 'white' : LAKERS_GOLD) 
+                : (showLogs ? 'black' : 'white'),
+              backdropFilter: 'blur(32px)',
+              boxShadow: isRunning && showLogs ? `0 0 32px ${LAKERS_PURPLE}60` : 'none',
+            }}
+          >
+            <CaretDown size={22} weight="bold" style={{ transform: showLogs ? 'none' : 'rotate(180deg)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+          </motion.button>
 
-            <button
-              onClick={() => isRunning ? stopTimer() : startTimer()}
-              disabled={isSyncing}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-700 relative overflow-hidden ${
-                isRunning ? 'bg-black text-azure-500 shadow-xl' : 'bg-azure-500 text-white shadow-lg shadow-azure-500/30 hover:scale-105 active:scale-95'
-              }`}
-            >
-              {isSyncing ? (
-                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <motion.div
-                  animate={{ rotate: isRunning ? 180 : 0 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+          {/* Timer Display Widget */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-2 rounded-full flex items-center gap-4 border"
+            style={{
+              backgroundColor: isRunning ? 'rgba(20, 5, 40, 0.85)' : 'rgba(13,13,13,0.8)',
+              backdropFilter: 'blur(48px)',
+              borderColor: isRunning ? `${LAKERS_PURPLE}80` : 'rgba(255,255,255,0.1)',
+              boxShadow: isRunning
+                ? `0 0 0 1px ${LAKERS_PURPLE}60, 0 12px 48px ${LAKERS_PURPLE}60`
+                : '0 12px 40px rgba(0,0,0,0.4)',
+            }}
+          >
+            <div className="flex items-center pl-5 pr-1 gap-6">
+              <div className="flex flex-col">
+                <span
+                  className="text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1.5 opacity-40 text-white"
+                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
                 >
-                  <Hourglass size={28} weight={isRunning ? 'fill' : 'bold'} />
-                </motion.div>
-              )}
-              
-              {isRunning && (
-                <motion.div 
-                  animate={{ opacity: [0.2, 0.5, 0.2] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="absolute inset-0 bg-azure-500/20 blur-md pointer-events-none"
-                />
-              )}
-            </button>
-          </div>
-        </motion.div>
+                  {isRunning ? 'Mamba Mode' : 'Total Semanal'}
+                </span>
+                <span
+                  className="text-lg font-black font-mono leading-none tracking-tighter text-white"
+                  style={{ color: isRunning ? LAKERS_GOLD : 'white' }}
+                >
+                  {isRunning ? formatDisplayTime(sessionSeconds) : formatTotalTime(totalMinutes)}
+                </span>
+              </div>
+
+              {/* Start/Stop Button */}
+              <motion.button
+                onClick={() => isRunning ? stopTimer() : startTimer()}
+                disabled={isSyncing}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-700 relative overflow-hidden group/btn"
+                style={{
+                  backgroundColor: isRunning ? LAKERS_PURPLE : 'white',
+                  color: isRunning ? LAKERS_GOLD : 'black',
+                  boxShadow: isRunning
+                    ? `0 0 30px ${LAKERS_PURPLE}80, 0 0 60px ${LAKERS_PURPLE}40`
+                    : '0 8px 32px rgba(255,255,255,0.2)',
+                }}
+              >
+                {isSyncing ? (
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <motion.div
+                    animate={{ rotate: isRunning ? 180 : 0 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+                  >
+                    <Hourglass size={30} weight={isRunning ? 'fill' : 'bold'} />
+                  </motion.div>
+                )}
+
+                {/* Pulsing glow when active */}
+                {isRunning && (
+                  <motion.div
+                    animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.4, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ backgroundColor: `${LAKERS_GOLD}40` }}
+                  />
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
+

@@ -1,10 +1,9 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Coffee, CurrencyDollar, CheckCircle, ArrowRight, X, Sparkle, MusicNotes, BookmarkSimple, FilmStrip } from '@phosphor-icons/react';
-import React, { useState, useEffect, useCallback } from 'react';
+import { CheckCircle, ArrowRight, X, Sparkle, MusicNotes, BookmarkSimple, FilmStrip, Coffee, FloppyDisk, Trash } from '@phosphor-icons/react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 
 // --- Interfaces ---
 interface Recommendation {
@@ -17,82 +16,132 @@ interface Recommendation {
 interface RecommendationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave: (text: string) => void;
   recommendation: Recommendation | null;
+  isSaved: boolean;
 }
 
 interface Task {
-  id: number;
+  id: string;
   text: string;
   done: boolean;
 }
 
 // --- Sub-componente: Modal de Recomendação (Inspiração) ---
-const RecommendationModal = ({ isOpen, onClose, recommendation }: RecommendationModalProps) => {
+const RecommendationModal = ({ isOpen, onClose, onSave, recommendation, isSaved }: RecommendationModalProps) => {
   if (!isOpen || !recommendation) return null;
 
-  const IconType = {
-    'Música': <MusicNotes size={32} weight="fill" className="text-azure-500" />,
-    'Livro': <BookmarkSimple size={32} weight="fill" className="text-emerald-500" />,
-    'Filme': <FilmStrip size={32} weight="fill" className="text-pink-500" />
-  }[recommendation.category as 'Música' | 'Livro' | 'Filme'];
+  const categoryConfig: Record<string, { icon: React.ReactNode; color: string; prefix: string }> = {
+    'Música': {
+      icon: <MusicNotes size={28} weight="fill" className="text-violet-400" />,
+      color: 'violet',
+      prefix: 'Escutar',
+    },
+    'Livro': {
+      icon: <BookmarkSimple size={28} weight="fill" className="text-emerald-400" />,
+      color: 'emerald',
+      prefix: 'Começar a ler',
+    },
+    'Filme': {
+      icon: <FilmStrip size={28} weight="fill" className="text-rose-400" />,
+      color: 'rose',
+      prefix: 'Assistir',
+    },
+  };
+
+  const config = categoryConfig[recommendation.category as 'Música' | 'Livro' | 'Filme'];
+
+  const handleSave = () => {
+    if (isSaved) return;
+    const taskText = `${config.prefix} ${recommendation.title}`;
+    onSave(taskText);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+        className="absolute inset-0 bg-black/85 backdrop-blur-2xl"
       />
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 1.1, opacity: 0, y: -20 }}
-        className="relative w-full max-w-lg bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-10 text-white overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-azure-500/10 blur-[100px] pointer-events-none" />
-        
-        <div className="flex justify-between items-start mb-8 relative z-10">
-          <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
-            {IconType}
-          </div>
-          <button onClick={onClose} className="p-2 text-white/20 hover:text-white transition-colors">
-            <X size={24} weight="bold" />
-          </button>
-        </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2 opacity-40">
-            <Sparkle size={14} weight="fill" className="text-azure-500" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Sugestão do Dia</span>
+      <motion.div
+        initial={{ scale: 0.85, opacity: 0, y: 40 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: 'spring', damping: 24, stiffness: 200 }}
+        className="relative w-full max-w-sm bg-[#0f0f0f] border border-white/8 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] text-white overflow-hidden"
+        style={{ minHeight: '600px' }}
+      >
+        {/* Ambient glow */}
+        <div className="absolute top-0 left-0 w-full h-64 opacity-30 pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at 50% 0%, ${config.color === 'violet' ? '#7c3aed' : config.color === 'emerald' ? '#10b981' : '#f43f5e'}40, transparent 70%)` }}
+        />
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-6 z-20 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/30 hover:text-white hover:bg-white/10 transition-all"
+        >
+          <X size={16} weight="bold" />
+        </button>
+
+        <div className="flex flex-col h-full p-10 relative z-10">
+          {/* Gap for removed icon */}
+          <div className="mb-4" />
+
+          {/* Label */}
+          <div className="flex items-center gap-2 mb-3 opacity-40">
+            <Sparkle size={12} weight="fill" className="text-white" />
+            <span className="text-[9px] font-black uppercase tracking-[0.4em]">Sugestão do Dia</span>
           </div>
-          
-          <h3 className="text-4xl font-black uppercase tracking-tighter leading-none mb-4 italic">
+
+          {/* Title */}
+          <h3 className="text-3xl font-black uppercase tracking-tighter leading-tight mb-4 italic">
             {recommendation.title}
           </h3>
-          
+
+          {/* Category + Author */}
           <div className="flex items-center gap-2 mb-8">
-             <span className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase tracking-widest text-azure-400 border border-azure-500/20">
-               {recommendation.category}
-             </span>
-             <span className="text-[10px] font-mono text-white/30 italic">por {recommendation.author}</span>
+            <span className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-bold uppercase tracking-widest text-white/60 border border-white/8">
+              {recommendation.category}
+            </span>
+            <span className="text-[10px] font-mono text-white/25 italic">por {recommendation.author}</span>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-sm md:text-base text-white/70 leading-relaxed font-mono italic">
-               &quot;{recommendation.briefing}&quot;
-            </p>
-          </div>
+          {/* Divider */}
+          <div className="w-8 h-px bg-white/10 mb-8" />
 
-          <div className="mt-12 flex justify-center">
-             <button 
-               onClick={onClose}
-               className="px-12 py-4 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-full hover:bg-azure-500 hover:text-white transition-all shadow-xl"
-             >
-               Fechar Inspiração
-             </button>
-          </div>
+          {/* Briefing */}
+          <p className="text-sm text-white/50 leading-relaxed font-mono italic flex-1">
+            &quot;{recommendation.briefing}&quot;
+          </p>
+
+          {/* Save Button */}
+          <motion.button
+            onClick={handleSave}
+            whileHover={isSaved ? {} : { scale: 1.03 }}
+            whileTap={isSaved ? {} : { scale: 0.97 }}
+            className={`mt-10 w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 transition-all duration-500 ${
+              isSaved
+                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 cursor-default'
+                : 'bg-white text-black hover:bg-white/90 shadow-xl cursor-pointer'
+            }`}
+          >
+            {isSaved ? (
+              <>
+                <CheckCircle size={18} weight="fill" />
+                Sugestão Salva
+              </>
+            ) : (
+              <>
+                <FloppyDisk size={18} weight="bold" />
+                Salvar Sugestão
+              </>
+            )}
+          </motion.button>
         </div>
       </motion.div>
     </div>
@@ -113,39 +162,75 @@ const recommendations: Recommendation[] = [
 ];
 
 // 1. Routine Section
-const initialTasks: Task[] = [
-  { id: 1, text: 'Review Next.js Docs', done: false },
-  { id: 2, text: 'Workout Session', done: true },
-  { id: 3, text: 'Read "Atomic Habits"', done: false },
-];
+interface RoutineSectionProps {
+  tasks: Task[];
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+}
 
-function RoutineSection() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const toggleTask = (id: number) => {
-    setTasks(prev => {
-      const newTasks = prev.map(t => t.id === id ? { ...t, done: !t.done } : t);
-      return newTasks.sort((a, b) => Number(a.done) - Number(b.done));
-    });
-  };
+function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) {
   return (
     <section id="rotina" className="w-full bg-transparent pt-8 pb-32 relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-        <div className="z-10">
-          <motion.h2 initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Minha Rotina</motion.h2>
-          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed">Inteligência e ritmo combinados.</motion.p>
-          <Link href="/rotina"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-8 px-8 py-4 bg-azure-500 text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-azure-600 transition-colors rounded-full">Ver Calendário Completo</motion.button></Link>
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+        <div className="z-10 sticky top-32">
+          <motion.h2 initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-2 font-space">Minha Rotina</motion.h2>
+          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed opacity-60">Inteligência e ritmo combinados.</motion.p>
+          <Link href="/rotina">
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-8 px-8 py-4 bg-azure-500 text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-azure-600 transition-colors rounded-full shadow-lg shadow-azure-500/20">
+              Ver Calendário Completo
+            </motion.button>
+          </Link>
         </div>
-        <div className="relative">
-          <div className="p-8 glass-panel rounded-3xl relative z-10">
-            <h3 className="text-xl font-semibold text-titanium-100 uppercase tracking-tighter mb-6">To do List</h3>
-            <div className="flex flex-col gap-3">
-              <AnimatePresence>{tasks.map(task => (
-                <motion.div layout layoutId={`task-${task.id}`} key={task.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className={`flex items-center justify-between p-5 rounded-2xl border transition-colors cursor-pointer ${task.done ? 'bg-titanium-700 border-black/5 text-titanium-400' : 'bg-white border-black/10 hover:border-azure-500/30 text-titanium-100 shadow-sm'}`} onClick={() => toggleTask(task.id)}>
-                  <span className="text-base font-medium">{task.text}</span>
-                  <CheckCircle size={24} weight={task.done ? 'fill' : 'regular'} className={task.done ? 'text-azure-500/40' : 'text-azure-500'} />
-                </motion.div>
-              ))}</AnimatePresence>
+
+        <div className="relative w-full h-auto md:mt-16">
+          <div className="p-10 glass-panel rounded-[3.5rem] relative z-10 w-full h-full border border-black/5 bg-white/50 backdrop-blur-2xl">
+            <div className="flex items-center justify-center mb-10 w-full">
+              <h3 className="text-2xl font-black text-titanium-100 uppercase tracking-[0.6em] text-center w-full">
+                To do List
+              </h3>
             </div>
+
+            <div className="flex flex-col gap-3">
+              <AnimatePresence mode="popLayout">
+                {tasks.map(task => (
+                  <motion.div
+                    layout
+                    layoutId={`task-${task.id}`}
+                    key={task.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8, x: -20 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-titanium-700/50 border-transparent text-titanium-400 line-through' : 'bg-white border-black/5 hover:border-azure-500/20 text-titanium-100 shadow-sm hover:shadow-md'}`}
+                    onClick={() => toggleTask(task.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${task.done ? 'bg-azure-500 border-azure-500' : 'border-azure-500/30'}`}>
+                        {task.done && <CheckCircle size={16} weight="fill" className="text-white" />}
+                      </div>
+                      <span className="text-base font-medium tracking-tight">{task.text}</span>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                      className="opacity-0 group-hover/item:opacity-100 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-titanium-400 hover:text-red-500 hover:bg-red-500/5 transition-all"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {tasks.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-20 flex flex-col items-center justify-center gap-4 text-titanium-400 opacity-30"
+              >
+                <ArrowRight size={40} className="rotate-90" />
+                <span className="text-xs font-black uppercase tracking-widest text-center">Nenhum protocolo ativo.<br />Inicie sua rotina.</span>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
@@ -153,53 +238,47 @@ function RoutineSection() {
   );
 }
 
-// 2. Study Section
+// 2. Study Section — Black Mamba Aesthetic
 function StudySection() {
-  const [hours, setHours] = useState(0);
-
-  const loadStats = useCallback(async () => {
-    const { data } = await supabase.from('study_stats').select('total_minutes').eq('category', 'Italiano').single();
-    if (data) {
-      setHours(Math.floor(data.total_minutes / 60));
-    }
-  }, []);
-
-  useEffect(() => {
-    loadStats();
-    // Refresh every minute to stay accurate if timer is running elsewhere
-    const interval = setInterval(loadStats, 60000);
-    return () => clearInterval(interval);
-  }, [loadStats]);
-
   return (
-    <section id="estudos" className="w-full bg-titanium-700 py-32 border-b border-black/[0.05] relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-        <div className="order-2 md:order-1 relative flex justify-center">
-          <div className="absolute inset-0 bg-azure-500/5 blur-[100px] opacity-40 rounded-full pointer-events-none" />
-          
-          <Link href="/estudos/flashcards" className="w-full max-w-sm">
-            {/* Liquid Glass Card */}
-            <motion.div 
-              whileHover={{ y: -10, scale: 1.02 }} 
-              className="w-full aspect-square flex flex-col items-center justify-center group text-center rounded-[2.5rem] relative overflow-hidden bg-white/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/70 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9),inset_0_-1px_1px_rgba(0,0,0,0.02)] before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/40 before:via-white/5 before:to-transparent before:opacity-80 before:pointer-events-none"
-            >
-              <div className="relative z-10 flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="w-32 h-auto mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 filter drop-shadow-md rounded-2xl overflow-hidden shadow-sm border border-black/5">
-                  <rect width="1" height="2" fill="#009246"/>
-                  <rect x="1" width="1" height="2" fill="#FFFFFF"/>
-                  <rect x="2" width="1" height="2" fill="#CE2B37"/>
-                </svg>
-                <h3 className="text-4xl font-bold text-titanium-100 mb-3 group-hover:text-azure-600 transition-colors tracking-tight">Italiano</h3>
-                <p className="text-titanium-400 font-mono text-lg">{hours} Horas estudadas</p>
-              </div>
-            </motion.div>
-          </Link>
-        </div>
-        <div className="order-1 md:order-2 z-10 flex flex-col md:items-end md:text-right">
-          <motion.h2 initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Foco & Estudos</motion.h2>
-          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed">O aprendizado exige controle absoluto e disciplina imperdoável.</motion.p>
-          <Link href="/estudos"><motion.button whileHover={{ x: -5 }} className="mt-8 flex items-center gap-2 text-sm text-azure-500 hover:text-azure-600 transition-colors uppercase tracking-widest font-bold"><ArrowRight size={20} className="rotate-180" /> Abrir Cadernos</motion.button></Link>
-        </div>
+    <section
+      id="estudos"
+      className="w-full py-48 border-b border-white/[0.04] relative overflow-hidden flex items-center justify-center"
+      style={{
+        backgroundColor: '#080808',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Cpath d='M20 0 L40 12 L20 24 L0 12 Z' fill='none' stroke='%23ffffff' stroke-width='0.5' stroke-opacity='0.1'/%3E%3C/svg%3E")`,
+        backgroundSize: '40px 24px',
+      }}
+    >
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-white/[0.02] rounded-full blur-[140px]" />
+      </div>
+      <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center relative z-10">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter text-white mb-8 leading-none"
+        >
+          Estudos
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.2 }}
+          className="text-xl md:text-2xl text-white/40 max-w-3xl leading-relaxed mb-12"
+        >
+          O aprendizado exige controle absoluto e disciplina imperdoável.
+        </motion.p>
+        <Link href="/estudos">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-12 py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-full hover:bg-white/90 transition-all shadow-2xl shadow-white/5"
+          >
+            Abrir Cadernos
+          </motion.button>
+        </Link>
       </div>
     </section>
   );
@@ -217,15 +296,15 @@ function FinanceSection() {
         </div>
         <div className="relative">
           <div className="p-10 glass-panel rounded-3xl group">
-             <div className="mb-8">
-               <div>
-                 <h3 className="text-xl font-semibold text-titanium-400 uppercase tracking-wider text-sm mb-1">Patrimônio Líquido</h3>
-                 <div className="text-5xl font-mono text-titanium-100 font-bold">R$ 14.290,55</div>
-               </div>
-             </div>
-             <div className="h-32 w-full flex items-end gap-3 mt-4 px-2">
-               {[40, 25, 60, 45, 80, 50, 90, 75, 100].map((h, i) => <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} transition={{ type: 'spring', damping: 15, delay: i * 0.05 }} className="flex-1 bg-azure-500/10 rounded-t-sm hover:bg-azure-500 transition-colors" />)}
-             </div>
+            <div className="mb-8">
+              <div>
+                <h3 className="text-xl font-semibold text-titanium-400 uppercase tracking-wider text-sm mb-1">Patrimônio Líquido</h3>
+                <div className="text-5xl font-mono text-titanium-100 font-bold">R$ 14.290,55</div>
+              </div>
+            </div>
+            <div className="h-32 w-full flex items-end gap-3 mt-4 px-2">
+              {[40, 25, 60, 45, 80, 50, 90, 75, 100].map((h, i) => <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} transition={{ type: 'spring', damping: 15, delay: i * 0.05 }} className="flex-1 bg-azure-500/10 rounded-t-sm hover:bg-azure-500 transition-colors" />)}
+            </div>
           </div>
         </div>
       </div>
@@ -234,87 +313,273 @@ function FinanceSection() {
 }
 
 // 4. Consume Section
-function ConsumeSection() {
+interface ConsumeSectionProps {
+  addTask: (text: string) => void;
+}
+
+function ConsumeSection({ addTask }: ConsumeSectionProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentRec, setCurrentRec] = useState<Recommendation | null>(null);
+  const [savedTitles, setSavedTitles] = useState<string[]>([]);
+
+  // Load saved titles from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('saved_recommendation_titles');
+    if (saved) {
+      setSavedTitles(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save titles to localStorage
+  useEffect(() => {
+    if (savedTitles.length > 0) {
+      localStorage.setItem('saved_recommendation_titles', JSON.stringify(savedTitles));
+    }
+  }, [savedTitles]);
 
   const handleOpenModal = () => {
-    // Daily seed logic: Same recommendation for the whole day (Local Time)
     const now = new Date();
     const today = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
     let seed = 0;
     for (let i = 0; i < today.length; i++) seed += today.charCodeAt(i);
-    
     const index = seed % recommendations.length;
     setCurrentRec(recommendations[index]);
     setModalOpen(true);
   };
 
-  const images = [
-    '/consumo/art1.png',
-    '/consumo/art2.png',
-    '/consumo/art3.png',
-    '/consumo/art4.png'
+  const handleSave = (text: string) => {
+    addTask(text);
+    if (currentRec && !savedTitles.includes(currentRec.title)) {
+      setSavedTitles(prev => [...prev, currentRec.title]);
+    }
+  };
+
+  const artworks = [
+    { src: '/consumo/art1.png', title: 'A Grande Onda', artist: 'Hokusai', year: '1831' },
+    { src: '/consumo/art2.png', title: 'Reverie', artist: 'Desconhecido', year: '2023' },
+    { src: '/consumo/art3.png', title: 'Bloom', artist: 'Anônimo', year: '2022' },
+    { src: '/consumo/art4.png', title: 'Les Amants', artist: 'Magritte', year: '1928' },
   ];
 
   return (
-    <section id="consumo" className="w-full bg-white py-32 border-b border-black/[0.05] relative overflow-hidden pb-48">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-        <div className="order-2 md:order-1 relative flex justify-center">
-          <div className="grid grid-cols-2 gap-4">
-            {images.map((img, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 50 }} 
-                whileInView={{ opacity: 1, y: 0 }} 
-                transition={{ type: 'spring', delay: i * 0.1 }} 
-                whileHover={{ scale: 1.05, rotate: i % 2 === 0 ? 2 : -2, zIndex: 20 }}
-                className={`w-32 h-48 md:w-48 md:h-64 rounded-xl border border-black/5 bg-white shadow-xl overflow-hidden relative ${i % 2 === 0 ? 'translate-y-8' : ''}`}
-              >
-                <img 
-                  src={img} 
-                  alt="Art masterpiece" 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
-                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                    const num = i + 1;
-                    (e.target as HTMLImageElement).src = `https://placehold.co/300x400/121212/white?text=Arte+${num}`;
-                  }}
-                />
-              </motion.div>
-            ))}
-          </div>
+    <section
+      id="consumo"
+      className="w-full relative overflow-hidden pb-0"
+      style={{
+        // Museum wall: warm limestone with subtle texture
+        background: `
+          linear-gradient(
+            to bottom,
+            #e8e0d4 0%,
+            #ddd5c8 40%,
+            #c8bfb0 70%,
+            #b5aa9a 100%
+          )
+        `,
+      }}
+    >
+      {/* Architectural wall details */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Subtle stone texture overlay */}
+        <div className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='200' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'repeat',
+          }}
+        />
+        {/* Dado rail / wainscoting — horizontal molding line */}
+        <div className="absolute left-0 right-0" style={{ top: '62%' }}>
+          <div className="w-full h-[3px] bg-[#9e917f]/60" />
+          <div className="w-full h-[1px] bg-white/30 mt-[2px]" />
+          <div className="w-full h-[1px] bg-[#9e917f]/30 mt-[3px]" />
         </div>
-        <div className="order-1 md:order-2 z-10 flex flex-col md:items-end md:text-right">
-          <motion.h2 initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Consumo</motion.h2>
-          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed">O que você consome molda sua mente.</motion.p>
-          <div className="mt-8 flex gap-4">
-             <motion.div 
-               whileHover={{ scale: 1.1 }} 
-               whileTap={{ scale: 0.9 }} 
-               onClick={handleOpenModal} 
-               className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-colors cursor-pointer text-azure-500 bg-white"
-             >
-               <Coffee size={24} />
-             </motion.div>
-             <Link href="/consumo"><motion.button whileHover={{ scale: 1.05, transition: { duration: 0.2 } }} whileTap={{ scale: 0.95 }} className="px-8 py-0 h-12 bg-black text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-gray-900 transition-colors rounded-full shadow-lg">Galeria</motion.button></Link>
+        {/* Lower wall panel — slightly darker below dado rail */}
+        <div className="absolute left-0 right-0 bottom-0" style={{ top: '62%', background: 'linear-gradient(to bottom, #b5aa9a, #a09080)' }} />
+        {/* Ceiling cornice shadow */}
+        <div className="absolute top-0 left-0 right-0 h-16" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.18), transparent)' }} />
+        {/* Floor shadow from bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-24" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.25), transparent)' }} />
+        {/* Parquet floor hint at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-20"
+          style={{
+            background: 'repeating-linear-gradient(90deg, rgba(139,108,71,0.15) 0px, rgba(139,108,71,0.15) 48px, rgba(160,128,88,0.12) 48px, rgba(160,128,88,0.12) 96px)',
+          }}
+        />
+      </div>
+
+      {/* Gallery layout */}
+      <div className="relative z-10 pt-20 pb-32">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-16 grid grid-cols-1 md:grid-cols-2 gap-0 items-start min-h-[520px]">
+
+          {/* Left — Museum wall with hanging artworks */}
+          <div className="order-2 md:order-1 relative flex items-center justify-center" style={{ minHeight: '480px' }}>
+            {/* Hanging wire line */}
+            <div className="absolute top-8 left-[10%] right-[10%] h-px bg-[#8a7a68]/40"
+              style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.15)' }}
+            />
+
+            {/* Artworks row — hung on the wall */}
+            <div className="flex items-end justify-center gap-16 pt-12 pb-4 w-full">
+              {artworks.map((art, i) => {
+                const frameSize = 'w-48 h-64';
+
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: -30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ type: 'spring', stiffness: 80, damping: 18, delay: i * 0.12 }}
+                    whileHover={{ y: -6, scale: 1.04, zIndex: 30 }}
+                    className="relative flex-shrink-0"
+                    style={{ transformOrigin: 'top center' }}
+                  >
+                    {/* Hanging wire from rail to frame */}
+                    <div className="absolute left-1/2 -top-12 w-px bg-[#8a7a68]/50" style={{ height: '48px', transform: 'translateX(-50%)' }} />
+                    <div className="absolute left-1/2 -top-12 w-1 h-1 rounded-full bg-[#c8b89a] border border-[#8a7a68]/60" style={{ transform: 'translate(-50%, -2px)' }} />
+
+                    {/* Picture frame */}
+                    <div
+                      className={`${frameSize} relative`}
+                      style={{
+                        // Gold ornate frame effect via box-shadow
+                        boxShadow: `
+                          0 0 0 3px #b8a07a,
+                          0 0 0 6px #8a6e40,
+                          0 0 0 9px #c8b07a,
+                          0 0 0 12px #7a5e30,
+                          8px 20px 40px rgba(0,0,0,0.55),
+                          0 6px 12px rgba(0,0,0,0.3)
+                        `,
+                        borderRadius: '2px',
+                      }}
+                    >
+                      {/* Spotlight / gallery light glow above painting */}
+                      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-32 h-24 pointer-events-none"
+                        style={{
+                          background: 'radial-gradient(ellipse at 50% 0%, rgba(255,240,180,0.35) 0%, transparent 80%)',
+                          filter: 'blur(8px)',
+                        }}
+                      />
+
+                      {/* Mat / passepartout */}
+                      <div className="absolute inset-0 bg-[#f5f0e8] p-3">
+                        <img
+                          src={art.src}
+                          alt={art.title}
+                          className="w-full h-full object-cover"
+                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                            (e.target as HTMLImageElement).src = `https://placehold.co/300x400/2a2015/c8b07a?text=${encodeURIComponent(art.title)}`;
+                          }}
+                        />
+                      </div>
+
+                      {/* Painting surface gloss */}
+                      <div className="absolute inset-3 pointer-events-none"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%)',
+                        }}
+                      />
+                    </div>
+
+                    {/* Museum placard below painting */}
+                    <div className="mt-5 flex flex-col items-center gap-0.5">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#4a3e2e]/80">{art.title}</span>
+                      <span className="text-[8px] italic text-[#4a3e2e]/55">{art.artist}, {art.year}</span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right — Text & Buttons (unchanged) */}
+          <div className="order-1 md:order-2 z-10 flex flex-col md:items-end md:text-right justify-center py-20">
+            <motion.h2 initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-6">Consumo</motion.h2>
+            <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed">O que você consome molda sua mente.</motion.p>
+            <div className="mt-8 flex gap-4 md:justify-end">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleOpenModal}
+                className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-colors cursor-pointer text-azure-500 bg-white"
+              >
+                <Coffee size={24} />
+              </motion.div>
+              <Link href="/consumo"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-8 py-0 h-12 bg-black text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-gray-900 transition-colors rounded-full shadow-lg">Galeria</motion.button></Link>
+            </div>
           </div>
         </div>
       </div>
 
       <AnimatePresence>
-        {modalOpen && <RecommendationModal isOpen={true} onClose={() => setModalOpen(false)} recommendation={currentRec} />}
+        {modalOpen && (
+          <RecommendationModal
+            isOpen={true}
+            onClose={() => setModalOpen(false)}
+            onSave={handleSave}
+            recommendation={currentRec}
+            isSaved={currentRec ? savedTitles.includes(currentRec.title) : false}
+          />
+        )}
       </AnimatePresence>
     </section>
+
   );
 }
 
+// --- Root Layout: shared tasks state ---
 export function SectionsLayout() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load Tasks
+  useEffect(() => {
+    const saved = localStorage.getItem('routine_tasks');
+    if (saved) {
+      setTasks(JSON.parse(saved));
+    } else {
+      setTasks([
+        { id: '1', text: 'Review Next.js Docs', done: false },
+        { id: '2', text: 'Workout Session', done: false },
+        { id: '3', text: 'Read "Atomic Habits"', done: false },
+      ]);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Persist Tasks
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('routine_tasks', JSON.stringify(tasks));
+    }
+  }, [tasks, isLoaded]);
+
+  const toggleTask = (id: string) => {
+    setTasks(prev => {
+      const updated = prev.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      return [...updated].sort((a, b) => Number(a.done) - Number(b.done));
+    });
+  };
+
+  const addTask = (text: string) => {
+    const newTask: Task = {
+      id: Date.now().toString(),
+      text,
+      done: false,
+    };
+    setTasks(prev => [newTask, ...prev].sort((a, b) => Number(a.done) - Number(b.done)));
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
+  };
+
   return (
     <>
-      <RoutineSection />
+      <RoutineSection tasks={tasks} toggleTask={toggleTask} deleteTask={deleteTask} />
       <StudySection />
       <FinanceSection />
-      <ConsumeSection />
+      <ConsumeSection addTask={addTask} />
     </>
   );
 }
