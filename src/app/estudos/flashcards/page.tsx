@@ -53,6 +53,7 @@ export default function FlashcardsPage() {
 
   const currentCard = deck[currentIndex];
 
+  return (
     <main className="min-h-screen p-8 md:p-12 overflow-hidden flex flex-col relative transition-colors duration-1000 bg-[#050505] text-zinc-100">
       
       {/* Background Graphic */}
