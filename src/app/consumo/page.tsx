@@ -148,7 +148,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       date: date,
       image_url: getPreviewUrl(),
       category: internalCategory,
-      rating,
+      rating: Math.round(rating),
       is_liked: isLiked
     };
 
