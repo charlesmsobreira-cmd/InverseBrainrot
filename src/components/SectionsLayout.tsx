@@ -168,70 +168,120 @@ interface RoutineSectionProps {
   deleteTask: (id: string) => void;
 }
 
+// 1. Routine Section — Notebook Aesthetic
 function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) {
   return (
-    <section id="rotina" className="w-full bg-transparent pt-8 pb-32 relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+    <section id="rotina" className="w-full bg-[#f8f7f4] py-32 border-b border-black/[0.04] relative overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-24 items-start">
+        
+        {/* Left Col — Narrative */}
         <div className="z-10 sticky top-32">
-          <motion.h2 initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-2 font-space">Minha Rotina</motion.h2>
-          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-lg text-titanium-400 max-w-md leading-relaxed opacity-60">Inteligência e ritmo combinados.</motion.p>
+          <motion.h2 
+            initial={{ opacity: 0, x: -30 }} 
+            whileInView={{ opacity: 1, x: 0 }} 
+            className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-titanium-100 mb-4"
+          >
+            Rotina
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }} 
+            whileInView={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.2 }}
+            className="text-lg text-titanium-400 max-w-md leading-relaxed font-medium"
+          >
+            A consistência é o único atalho para a maestria. Mantenha o ritmo inabalável.
+          </motion.p>
           <Link href="/rotina">
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-8 px-8 py-4 bg-azure-500 text-white font-bold tracking-widest uppercase text-sm flex items-center justify-center hover:bg-azure-600 transition-colors rounded-full shadow-lg shadow-azure-500/20">
-              Ver Calendário Completo
+            <motion.button 
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.95 }} 
+              className="mt-10 px-8 py-4 border border-black/10 text-black font-bold tracking-[0.2em] uppercase text-[10px] flex items-center gap-3 rounded-full hover:bg-black hover:text-white transition-all shadow-sm"
+            >
+              Agenda Completa
+              <ArrowRight size={14} />
             </motion.button>
           </Link>
         </div>
 
-        <div className="relative w-full h-auto md:mt-16">
-          <div className="p-10 glass-panel rounded-[3.5rem] relative z-10 w-full h-full border border-black/5 bg-white/50 backdrop-blur-2xl">
-            <div className="flex items-center justify-center mb-10 w-full">
-              <h3 className="text-2xl font-black text-titanium-100 uppercase tracking-[0.6em] text-center w-full">
-                To do List
-              </h3>
+        {/* Right Col — The Notebook */}
+        <div className="relative w-full max-w-xl mx-auto">
+          {/* Notebook Paper */}
+          <motion.div 
+            initial={{ opacity: 0, rotate: -1 }}
+            whileInView={{ opacity: 1, rotate: -2 }}
+            transition={{ duration: 1 }}
+            className="relative bg-white shadow-[20px_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-sm min-h-[600px] p-12 md:p-16 border border-black/[0.03]"
+            style={{
+              backgroundImage: 'linear-gradient(transparent 39px, #f1f1f1 39px)',
+              backgroundSize: '100% 40px',
+              lineHeight: '40px'
+            }}
+          >
+            {/* Spiral Rings Visual */}
+            <div className="absolute -left-6 top-8 bottom-8 flex flex-col justify-between py-4">
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="flex items-center">
+                  <div className="w-12 h-3 bg-gradient-to-r from-titanium-400/20 to-titanium-400/50 rounded-full shadow-inner border border-black/10" />
+                  <div className="w-2 h-2 bg-titanium-600 rounded-full -ml-1 border border-black/20" />
+                </div>
+              ))}
             </div>
 
-            <div className="flex flex-col gap-3">
-              <AnimatePresence mode="popLayout">
-                {tasks.map(task => (
-                  <motion.div
-                    layout
-                    layoutId={`task-${task.id}`}
-                    key={task.id}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8, x: -20 }}
-                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                    className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-titanium-700/50 border-transparent text-titanium-400 line-through' : 'bg-white border-black/5 hover:border-azure-500/20 text-titanium-100 shadow-sm hover:shadow-md'}`}
-                    onClick={() => toggleTask(task.id)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${task.done ? 'bg-azure-500 border-azure-500' : 'border-azure-500/30'}`}>
-                        {task.done && <CheckCircle size={16} weight="fill" className="text-white" />}
-                      </div>
-                      <span className="text-base font-medium tracking-tight">{task.text}</span>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                      className="opacity-0 group-hover/item:opacity-100 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-titanium-400 hover:text-red-500 hover:bg-red-500/5 transition-all"
+            {/* Notebook Content */}
+            <div className="relative z-10">
+              <div className="mb-14 pt-4">
+                <h3 className="font-kalam text-5xl text-black/80 font-bold -rotate-1 tracking-tight">
+                  To Do List
+                </h3>
+              </div>
+
+              <div className="flex flex-col">
+                <AnimatePresence mode="popLayout">
+                  {tasks.map((task, i) => (
+                    <motion.div
+                      layout
+                      layoutId={`task-${task.id}`}
+                      key={task.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className={`flex items-center justify-between group h-10 cursor-pointer ${task.done ? 'opacity-40' : 'opacity-100'}`}
+                      onClick={() => toggleTask(task.id)}
                     >
-                      <Trash size={16} />
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                      <div className="flex items-center gap-6 w-full">
+                        <span className="font-kalam text-2xl text-black/30 font-bold min-w-[2rem]">{i + 1}.</span>
+                        <div className="relative flex items-center w-full">
+                          <span className={`font-kalam text-2xl text-black/80 tracking-tight transition-all pb-1 ${task.done ? 'line-through decoration-2 decoration-red-500/50' : ''}`}>
+                            {task.text}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                        className="opacity-0 group-hover:opacity-40 w-8 h-8 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500/5 transition-all"
+                      >
+                        <Trash size={14} />
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {tasks.length === 0 && (
+                <div className="py-20 text-center">
+                  <p className="font-kalam text-xl text-black/20 italic">Nada planejado para agora...</p>
+                </div>
+              )}
             </div>
 
-            {tasks.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="py-20 flex flex-col items-center justify-center gap-4 text-titanium-400 opacity-30"
-              >
-                <ArrowRight size={40} className="rotate-90" />
-                <span className="text-xs font-black uppercase tracking-widest text-center">Nenhum protocolo ativo.<br />Inicie sua rotina.</span>
-              </motion.div>
-            )}
-          </div>
+            {/* Bottom corner "page shadow" */}
+            <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tr from-black/[0.02] to-transparent pointer-events-none" />
+          </motion.div>
+          
+          {/* Subtle "Paper under the page" layer for depth */}
+          <div className="absolute inset-0 bg-white shadow-sm rounded-sm translate-x-1 translate-y-1 -z-10 border border-black/5" />
+          <div className="absolute inset-0 bg-white shadow-sm rounded-sm translate-x-2 translate-y-2 -z-20 border border-black/5" />
         </div>
       </div>
     </section>
