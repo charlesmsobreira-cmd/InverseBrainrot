@@ -168,7 +168,7 @@ interface RoutineSectionProps {
   deleteTask: (id: string) => void;
 }
 
-// 1. Routine Section — Notebook Aesthetic
+// 1. Routine Section — Card Aesthetic (Refined Colors)
 function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) {
   return (
     <section id="rotina" className="w-full bg-[#f8f7f4] py-32 border-b border-black/[0.04] relative overflow-hidden">
@@ -203,63 +203,46 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
           </Link>
         </div>
 
-        {/* Right Col — The Notebook */}
-        <div className="relative w-full max-w-xl mx-auto">
-          {/* Notebook Paper */}
+        {/* Right Col — The Card List */}
+        <div className="relative w-full">
           <motion.div 
-            initial={{ opacity: 0, rotate: -1 }}
-            whileInView={{ opacity: 1, rotate: -2 }}
-            transition={{ duration: 1 }}
-            className="relative bg-white shadow-[20px_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-sm min-h-[600px] p-12 md:p-16 border border-black/[0.03]"
-            style={{
-              backgroundImage: 'linear-gradient(transparent 39px, #f1f1f1 39px)',
-              backgroundSize: '100% 40px',
-              lineHeight: '40px'
-            }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-[2rem] p-10 md:p-14 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-black/[0.03] relative min-h-[500px]"
           >
-            {/* Spiral Rings Visual */}
-            <div className="absolute -left-6 top-8 bottom-8 flex flex-col justify-between py-4">
-              {[...Array(12)].map((_, i) => (
-                <div key={i} className="flex items-center">
-                  <div className="w-12 h-3 bg-gradient-to-r from-titanium-400/20 to-titanium-400/50 rounded-full shadow-inner border border-black/10" />
-                  <div className="w-2 h-2 bg-titanium-600 rounded-full -ml-1 border border-black/20" />
-                </div>
-              ))}
-            </div>
-
-            {/* Notebook Content */}
-            <div className="relative z-10">
-              <div className="mb-14 pt-4">
-                <h3 className="font-kalam text-5xl text-black/80 font-bold -rotate-1 tracking-tight">
+            <div className="flex flex-col gap-10">
+              <div className="flex items-center justify-between border-b border-black/[0.03] pb-8">
+                <h3 className="font-kalam text-5xl text-black/90 font-bold tracking-tight">
                   To Do List
                 </h3>
+                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-titanium-400/40">Daily Protocol</div>
               </div>
 
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-3">
                 <AnimatePresence mode="popLayout">
-                  {tasks.map((task, i) => (
+                  {tasks.map((task) => (
                     <motion.div
                       layout
                       layoutId={`task-${task.id}`}
                       key={task.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      className={`flex items-center justify-between group h-10 cursor-pointer ${task.done ? 'opacity-40' : 'opacity-100'}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                      className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-black/[0.03] border-transparent text-titanium-400' : 'bg-white border-black/5 hover:border-black/20 text-titanium-100 shadow-sm hover:shadow-md'}`}
                       onClick={() => toggleTask(task.id)}
                     >
-                      <div className="flex items-center gap-6 w-full">
-                        <span className="font-kalam text-2xl text-black/30 font-bold min-w-[2rem]">{i + 1}.</span>
-                        <div className="relative flex items-center w-full">
-                          <span className={`font-kalam text-2xl text-black/80 tracking-tight transition-all pb-1 ${task.done ? 'line-through decoration-2 decoration-red-500/50' : ''}`}>
-                            {task.text}
-                          </span>
+                      <div className="flex items-center gap-4">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${task.done ? 'bg-black border-black scale-90' : 'border-black/20'}`}>
+                          {task.done && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                         </div>
+                        <span className={`text-base font-semibold tracking-tight ${task.done ? 'line-through opacity-50' : ''}`}>
+                          {task.text}
+                        </span>
                       </div>
-                      
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                        className="opacity-0 group-hover:opacity-40 w-8 h-8 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500/5 transition-all"
+                        className="opacity-0 group-hover/item:opacity-100 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-titanium-400 hover:text-red-500 hover:bg-red-500/5 transition-all"
                       >
                         <Trash size={14} />
                       </button>
@@ -269,19 +252,15 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
               </div>
 
               {tasks.length === 0 && (
-                <div className="py-20 text-center">
-                  <p className="font-kalam text-xl text-black/20 italic">Nada planejado para agora...</p>
+                <div className="py-20 flex flex-col items-center justify-center gap-4 text-titanium-400 opacity-20">
+                  <span className="text-xs font-black uppercase tracking-widest text-center">Protocolo Finalizado</span>
                 </div>
               )}
             </div>
-
-            {/* Bottom corner "page shadow" */}
-            <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tr from-black/[0.02] to-transparent pointer-events-none" />
           </motion.div>
           
-          {/* Subtle "Paper under the page" layer for depth */}
-          <div className="absolute inset-0 bg-white shadow-sm rounded-sm translate-x-1 translate-y-1 -z-10 border border-black/5" />
-          <div className="absolute inset-0 bg-white shadow-sm rounded-sm translate-x-2 translate-y-2 -z-20 border border-black/5" />
+          {/* Subtle decoration for depth */}
+          <div className="absolute -z-10 top-6 -right-6 w-full h-full bg-black/[0.01] rounded-[2rem] blur-2xl" />
         </div>
       </div>
     </section>
