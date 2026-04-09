@@ -96,7 +96,26 @@ export default function FinancePage() {
     setExpenses(expenses.filter(e => e.id !== id));
   };
 
-  // -- Calculations --
+  // --- Chart Math Helpers ---
+  function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
+    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+    return {
+      x: centerX + (radius * Math.cos(angleInRadians)),
+      y: centerY + (radius * Math.sin(angleInRadians))
+    };
+  }
+
+  function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number) {
+    const start = polarToCartesian(x, y, radius, endAngle);
+    const end = polarToCartesian(x, y, radius, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+    return [
+      "M", start.x, start.y, 
+      "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
+    ].join(" ");
+  }
+
+  // --- Calculations ---
   const spent = expenses.reduce((acc, curr) => acc + curr.value, 0);
   const spentPercentage = Math.min((spent / (limit || 1)) * 100, 100);
   
@@ -121,10 +140,7 @@ export default function FinancePage() {
     val: getCategoryStats(cat.id).percentage
   }));
 
-  // SVG Chart Math
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
-  let currentOffset = 0;
+  let cumulativeAngle = 0;
 
   return (
     <main className="min-h-screen bg-[#0B0B0C] text-white/90 p-6 md:p-12 lg:p-20 relative selection:bg-white selection:text-black">
@@ -362,49 +378,51 @@ export default function FinancePage() {
             </div>
             
             <div className="w-[480px] h-[480px] relative flex items-center justify-center p-8 scale-110 lg:scale-125">
-               {/* Large Analytical SVG Pie Chart (Clockwise Emerge Animation) */}
+               {/* Large Analytical SVG Donut (Path Injection Rebuild) */}
                <svg 
                  viewBox="0 0 100 100" 
-                 className="w-full h-full transform -rotate-90 filter drop-shadow-[0_0_30px_rgba(255,255,255,0.05)]"
+                 className="w-full h-full filter drop-shadow-[0_0_30px_rgba(255,255,255,0.05)]"
                >
-                 <defs>
-                   <mask id="revealMask">
-                     <motion.circle 
-                       initial={{ pathLength: 0 }}
-                       whileInView={{ pathLength: 1 }}
-                       transition={{ duration: 1.5, ease: "easeInOut" }}
-                       cx="50" cy="50" r="40" fill="transparent" stroke="white" strokeWidth="16" 
-                     />
-                   </mask>
-                 </defs>
-
                  {/* Static Background Ring */}
                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="15" />
 
-                 {/* Revealed Segment Group */}
-                 <g mask="url(#revealMask)">
-                    {processedCategories.map((cat, i) => {
-                      if (cat.val === 0) return null;
-                      
-                      // For 100% case, we use a solid circle to avoid any seams
-                      const isFullCircle = cat.val >= 99.9;
-                      const segmentLength = (cat.val / 100) * circumference;
-                      const offset = -currentOffset;
-                      currentOffset += segmentLength;
-                      
+                 {/* Calculated Path Segments */}
+                 {processedCategories.map((cat, i) => {
+                    if (cat.val === 0) return null;
+                    
+                    // Logic for 100% case
+                    if (cat.val >= 99.99) {
                       return (
-                        <circle 
+                        <motion.circle 
                           key={cat.id}
+                          initial={{ pathLength: 0 }} 
+                          animate={{ pathLength: 1 }}
+                          transition={{ duration: 1.5, ease: "easeInOut" }}
                           cx="50" cy="50" r="40" fill="transparent" 
                           stroke={cat.color} strokeWidth="15" 
-                          strokeLinecap={isFullCircle ? "butt" : "round"}
-                          strokeDasharray={isFullCircle ? "none" : `${segmentLength} ${circumference}`} 
-                          strokeDashoffset={isFullCircle ? 0 : offset}
-                          className="transition-all duration-1000"
                         />
                       );
-                    })}
-                 </g>
+                    }
+
+                    const sweepAngle = (cat.val / 100) * 360;
+                    const startAngle = cumulativeAngle;
+                    const endAngle = cumulativeAngle + sweepAngle;
+                    cumulativeAngle += sweepAngle;
+
+                    return (
+                      <motion.path 
+                        key={cat.id}
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 1.5, ease: "easeInOut" }}
+                        d={describeArc(50, 50, 40, startAngle, endAngle)}
+                        fill="transparent"
+                        stroke={cat.color}
+                        strokeWidth="15"
+                        strokeLinecap="butt"
+                      />
+                    );
+                 })}
                </svg>
                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                  <div className="flex flex-col items-center">
