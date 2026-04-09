@@ -129,10 +129,10 @@ export default function FinancePage() {
   };
 
   const dashboardCategories = [
-    { id: 'Equities', label: "Equities", color: "#00D1FF" },
-    { id: 'Fixed Income', label: "Fixed Income", color: "#8B5CF6" },
-    { id: 'Alternatives', label: "Alternatives", color: "#F59E0B" },
-    { id: 'Liquidity', label: "Liquidity", color: "#10B981" }
+    { id: 'Equities', label: "Ações", color: "#00D1FF" },
+    { id: 'Fixed Income', label: "Renda Fixa", color: "#8B5CF6" },
+    { id: 'Alternatives', label: "Cripto / Diversos", color: "#F59E0B" },
+    { id: 'Liquidity', label: "Liquidez", color: "#10B981" }
   ];
 
   const processedCategories = dashboardCategories.map(cat => ({
@@ -415,7 +415,7 @@ export default function FinancePage() {
                         initial={{ pathLength: 0 }}
                         animate={{ pathLength: 1 }}
                         transition={{ duration: 1.5, ease: "easeInOut" }}
-                        d={describeArc(50, 50, 40, startAngle, endAngle)}
+                        d={describeArc(50, 50, 40, startAngle, endAngle + 1)}
                         fill="transparent"
                         stroke={cat.color}
                         strokeWidth="15"
