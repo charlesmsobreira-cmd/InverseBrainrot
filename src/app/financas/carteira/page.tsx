@@ -24,6 +24,7 @@ export default function PortfolioPage() {
   const [assetName, setAssetName] = useState('');
   const [assetValue, setAssetValue] = useState('');
   const [assetCategory, setAssetCategory] = useState<Asset['category']>('Equities');
+  const [isAdding, setIsAdding] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function PortfolioPage() {
     setAssets([newItem, ...assets]);
     setAssetName('');
     setAssetValue('');
+    setIsAdding(false); // Close after adding
   };
 
   const removeAsset = (id: string) => {
@@ -104,46 +106,66 @@ export default function PortfolioPage() {
 
         {/* Add Asset Form */}
         <section className="mb-24">
-          <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/20 mb-8 flex items-center gap-3">
-             <Plus size={14} weight="bold" /> Adicionar Ativo
-          </h2>
-          <div className="flex flex-col gap-6 bg-white/3 p-8 border border-white/5 rounded-[3rem]">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <input 
-                 type="text" placeholder="Nome do Ativo (ex: AAPL, BTC, CDB)" 
-                 value={assetName} onChange={e => setAssetName(e.target.value)}
-                 className="bg-white/5 border border-white/10 rounded-2xl p-6 text-white font-bold outline-none focus:bg-white/10 transition-all"
-               />
-               <input 
-                 type="number" placeholder="Valor R$ 0,00" 
-                 value={assetValue} onChange={e => setAssetValue(e.target.value)}
-                 className="bg-white/5 border border-white/10 rounded-2xl p-6 text-white font-mono font-bold outline-none focus:bg-white/10 transition-all"
-               />
-            </div>
-            
-            <div className="flex flex-wrap gap-3">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setAssetCategory(cat.id as Asset['category'])}
-                  className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                    assetCategory === cat.id 
-                      ? 'bg-white text-black border-white' 
-                      : 'bg-white/5 text-white/40 border-white/5 hover:border-white/20'
-                  }`}
-                >
-                  {cat.icon} {cat.label}
-                </button>
-              ))}
-            </div>
+          <button 
+            onClick={() => setIsAdding(!isAdding)}
+            className="w-full flex items-center justify-between group"
+          >
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/20 group-hover:text-white transition-all flex items-center gap-3">
+               <Plus size={14} weight="bold" className={`transition-transform duration-500 ${isAdding ? 'rotate-45' : ''}`} /> Adicionar Ativo
+            </h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/10 group-hover:text-white/40 transition-all">
+              {isAdding ? 'cancelar' : 'expandir'}
+            </span>
+          </button>
+          
+          <AnimatePresence>
+            {isAdding && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-col gap-6 bg-white/3 p-8 border border-white/5 rounded-[3rem] mt-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input 
+                      type="text" placeholder="Nome do Ativo (ex: AAPL, BTC, CDB)" 
+                      value={assetName} onChange={e => setAssetName(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-2xl p-6 text-white font-bold outline-none focus:bg-white/10 transition-all"
+                    />
+                    <input 
+                      type="number" placeholder="Valor R$ 0,00" 
+                      value={assetValue} onChange={e => setAssetValue(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-2xl p-6 text-white font-mono font-bold outline-none focus:bg-white/10 transition-all"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    {CATEGORIES.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setAssetCategory(cat.id as Asset['category'])}
+                        className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                          assetCategory === cat.id 
+                            ? 'bg-white text-black border-white' 
+                            : 'bg-white/5 text-white/40 border-white/5 hover:border-white/20'
+                        }`}
+                      >
+                        {cat.icon} {cat.label}
+                      </button>
+                    ))}
+                  </div>
 
-            <button 
-              onClick={addAsset}
-              className="w-full py-6 bg-white text-black rounded-2xl font-black uppercase tracking-[0.4em] text-[11px] hover:bg-zinc-200 transition-all shadow-xl shadow-white/5"
-            >
-              Registrar Ativo
-            </button>
-          </div>
+                  <button 
+                    onClick={addAsset}
+                    className="w-full py-6 bg-white text-black rounded-2xl font-black uppercase tracking-[0.4em] text-[11px] hover:bg-zinc-200 transition-all shadow-xl shadow-white/5"
+                  >
+                    Registrar Ativo
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
 
         {/* Asset List */}
@@ -191,6 +213,29 @@ export default function PortfolioPage() {
         </section>
 
       </div>
+
+      <style jsx global>{`
+        /* Hide number input spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+        /* Custom scrollbar for consistency */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+      `}</style>
     </main>
   );
 }
