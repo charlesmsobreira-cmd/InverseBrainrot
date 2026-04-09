@@ -112,7 +112,7 @@ export default function InboxPage() {
                 onChange={(e) => setNewCapture(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addCapture()}
                 placeholder="Capture uma nova ideia..."
-                className="w-full bg-black/5 border-none outline-none p-8 rounded-[2.5rem] text-xl font-bold placeholder:text-black/20 focus:bg-black/10 transition-all shadow-inner"
+                className="w-full bg-black/5 border-none outline-none p-8 pr-24 rounded-[2.5rem] text-xl font-bold placeholder:text-black/20 focus:bg-black/10 transition-all shadow-inner"
               />
               <button 
                 onClick={addCapture}
