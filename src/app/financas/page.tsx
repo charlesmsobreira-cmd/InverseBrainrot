@@ -383,23 +383,27 @@ export default function FinancePage() {
 
                  {/* Revealed Segment Group */}
                  <g mask="url(#revealMask)">
-                   {processedCategories.map((cat, i) => {
-                     if (cat.val === 0) return null;
-                     const segmentLength = (cat.val / 100) * circumference;
-                     const offset = -currentOffset;
-                     currentOffset += segmentLength;
-                     
-                     return (
+                    {processedCategories.map((cat, i) => {
+                      if (cat.val === 0) return null;
+                      
+                      // For 100% case, we use a solid circle to avoid any seams
+                      const isFullCircle = cat.val >= 99.9;
+                      const segmentLength = (cat.val / 100) * circumference;
+                      const offset = -currentOffset;
+                      currentOffset += segmentLength;
+                      
+                      return (
                         <circle 
                           key={cat.id}
                           cx="50" cy="50" r="40" fill="transparent" 
                           stroke={cat.color} strokeWidth="15" 
-                          strokeDasharray={`${segmentLength + 0.8} ${circumference}`} 
-                          strokeDashoffset={offset}
+                          strokeLinecap={isFullCircle ? "butt" : "round"}
+                          strokeDasharray={isFullCircle ? "none" : `${segmentLength} ${circumference}`} 
+                          strokeDashoffset={isFullCircle ? 0 : offset}
                           className="transition-all duration-1000"
                         />
-                     );
-                   })}
+                      );
+                    })}
                  </g>
                </svg>
                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
