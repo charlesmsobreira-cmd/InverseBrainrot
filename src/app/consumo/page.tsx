@@ -72,7 +72,6 @@ const Toast = ({ message, type, onClose }: ToastProps) => (
 
 // --- Sub-componente: Lista de Favoritos/Wishlist ---
 const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
-  // Map standard title to highlight category
   const mapCategory: Record<string, string> = {
     'Músicas': 'Música',
     'Livros': 'Livro',
@@ -86,19 +85,42 @@ const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
 
   if (filtered.length === 0) return null;
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "circOut" } }
+  };
+
   return (
-    <ul className="flex flex-col items-center w-full max-w-sm mb-8">
-      {filtered.map((item) => (
-        <li
-          key={item.id}
+    <motion.ul 
+      variants={container as any}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true }}
+      className="flex flex-col items-center w-full max-w-sm mb-8"
+    >
+      {filtered.map((log) => (
+        <motion.li
+          key={log.id}
+          variants={item as any}
           className={`w-full py-2.5 border-b text-center text-sm md:text-base font-bold tracking-tight last:border-0 ${
             textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'
           }`}
         >
-          {item.title}
-        </li>
+          {log.title}
+        </motion.li>
       ))}
-    </ul>
+    </motion.ul>
   );
 };
 
@@ -236,9 +258,6 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
                          </div>
                        );
                      })}
-                     {(hoverRating || rating) > 0 && (
-                       <span className="ml-1 text-[10px] font-mono text-azure-400 opacity-70">{hoverRating || rating}</span>
-                     )}
                    </div>
                  </div>
                  <div className="space-y-2">
