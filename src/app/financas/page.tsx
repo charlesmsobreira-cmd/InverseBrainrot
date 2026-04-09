@@ -310,31 +310,6 @@ export default function FinancePage() {
           </div>
         </motion.div>
 
-        {/* Row 2: Strategy Widgets & Summary (Padronizado) */}
-        <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-8 py-10 items-stretch">
-          <StrategyCard 
-            title="Análise Estática" 
-            icon={<ChartBar size={36} />} 
-            onClick={() => setActiveModal('statica')} 
-            desc="Processamento de stress de mercado e volatilidade." 
-          />
-          
-          <StrategyCard 
-            title="Resumo Global" 
-            icon={<PresentationChart size={36} />} 
-            onClick={() => setActiveModal('resumo')} 
-            accent 
-            desc="Visão consolidada de performance e alocação de ativos." 
-          />
-
-          <StrategyCard 
-            title="Alocação Alpha" 
-            icon={<TrendUp size={36} />} 
-            onClick={() => setActiveModal('alpha')} 
-            desc="Sinais quantitativos de ativos subvalorizados." 
-          />
-        </div>
-
         {/* Row 3: Main Strategic Area (Engenharia) - Section Divider Style */}
         <FullWidthDivider />
         <motion.div 
