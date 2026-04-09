@@ -444,7 +444,6 @@ export default function FinancePage() {
           </div>
         </motion.div>
 
-        </motion.div>
 
         {/* Row 5: Decorative Divider */}
         <FullWidthDivider />

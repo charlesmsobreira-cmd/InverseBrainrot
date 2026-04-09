@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, PlusCircle, Trash, Wallet, ChartPieLabel, CurrencyCircleDollar, TrendUp, Vault, Plus } from '@phosphor-icons/react';
+import { ArrowLeft, PlusCircle, Trash, Wallet, ChartPieSlice, CurrencyCircleDollar, TrendUp, Vault, Plus } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -75,7 +75,7 @@ export default function PortfolioPage() {
           </Link>
           <div className="flex flex-col items-center gap-4">
              <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-black shadow-2xl">
-               <ChartPieLabel size={32} weight="fill" />
+               <ChartPieSlice size={32} weight="fill" />
              </div>
              <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tighter leading-none italic">
                Carteira
