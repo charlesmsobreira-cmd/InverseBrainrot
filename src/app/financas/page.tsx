@@ -234,15 +234,20 @@ export default function FinancePage() {
             </div>
             
             {/* Full-width Horizontal Pill Bar Chart (B&W Style) */}
-            <div className="w-full h-14 bg-white/5 rounded-full border border-white/10 overflow-hidden relative p-1.5 shadow-inner">
+            <div className="w-full h-14 bg-white/5 rounded-full border border-white/10 overflow-hidden relative p-1.5 shadow-inner group">
+              {/* Centered Label with Mix-Blend-Mode for high-end look */}
+              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                <span className="text-sm font-black text-white mix-blend-difference tracking-tight">
+                  {(spent/1000).toFixed(1)}K
+                </span>
+              </div>
+
               <motion.div 
                 initial={{ width: 0 }} 
                 animate={{ width: `${spentPercentage}%` }} 
                 transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
-                className="h-full bg-white rounded-full flex items-center justify-end px-5 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-              >
-                <span className="text-sm font-black text-black tracking-tight drop-shadow-sm">{(spent/1000).toFixed(1)}K</span>
-              </motion.div>
+                className="h-full bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              />
             </div>
 
             <div className="flex justify-center items-center pt-6 border-t border-white/5">
