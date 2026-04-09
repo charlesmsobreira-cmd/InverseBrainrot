@@ -13,10 +13,10 @@ interface Asset {
 }
 
 const CATEGORIES = [
-  { id: 'Equities', label: 'Ações / Variável', icon: <TrendUp size={16} /> },
-  { id: 'Fixed Income', label: 'Renda Fixa', icon: <Vault size={16} /> },
-  { id: 'Alternatives', label: 'Cripto / Diversos', icon: <CurrencyCircleDollar size={16} /> },
-  { id: 'Liquidity', label: 'Liquidez / Reserva', icon: <Wallet size={16} /> },
+  { id: 'Equities', label: 'Ações / Variável', icon: <TrendUp size={16} />, color: "#00D1FF" },
+  { id: 'Fixed Income', label: 'Renda Fixa', icon: <Vault size={16} />, color: "#8B5CF6" },
+  { id: 'Alternatives', label: 'Cripto / Diversos', icon: <CurrencyCircleDollar size={16} />, color: "#F59E0B" },
+  { id: 'Liquidity', label: 'Liquidez / Reserva', icon: <Wallet size={16} />, color: "#10B981" },
 ];
 
 export default function PortfolioPage() {
@@ -145,11 +145,12 @@ export default function PortfolioPage() {
                       <button
                         key={cat.id}
                         onClick={() => setAssetCategory(cat.id as Asset['category'])}
-                        className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                          assetCategory === cat.id 
-                            ? 'bg-white text-black border-white' 
-                            : 'bg-white/5 text-white/40 border-white/5 hover:border-white/20'
-                        }`}
+                        style={{ 
+                          borderColor: assetCategory === cat.id ? cat.color : 'rgba(255,255,255,0.05)',
+                          backgroundColor: assetCategory === cat.id ? `${cat.color}20` : 'rgba(255,255,255,0.05)',
+                          color: assetCategory === cat.id ? cat.color : 'rgba(255,255,255,0.4)'
+                        }}
+                        className="flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border outline-none"
                       >
                         {cat.icon} {cat.label}
                       </button>
@@ -172,37 +173,43 @@ export default function PortfolioPage() {
         <section className="space-y-6">
           <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/20 mb-8">Posições Atuais</h2>
           <AnimatePresence mode="popLayout">
-            {assets.map(asset => (
-              <motion.div
-                layout
-                key={asset.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex items-center justify-between p-8 bg-white/3 border border-white/5 rounded-[2rem] hover:border-white/20 transition-all group"
-              >
-                <div className="flex items-center gap-6">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-white/40">
-                    {CATEGORIES.find(c => c.id === asset.category)?.icon}
+            {assets.map(asset => {
+              const catInfo = CATEGORIES.find(c => c.id === asset.category);
+              return (
+                <motion.div
+                  layout
+                  key={asset.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex items-center justify-between p-8 bg-white/3 border border-white/5 rounded-[2rem] hover:border-white/20 transition-all group"
+                >
+                  <div className="flex items-center gap-6">
+                    <div 
+                      style={{ backgroundColor: `${catInfo?.color}15`, color: catInfo?.color }}
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    >
+                      {catInfo?.icon}
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-black uppercase tracking-tight text-white">{asset.label}</h4>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/20">{asset.category}</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-tight text-white">{asset.label}</h4>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/20">{asset.category}</span>
+                  <div className="flex items-center gap-8">
+                    <span className="text-2xl font-black font-mono text-white">
+                      {asset.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </span>
+                    <button 
+                      onClick={() => removeAsset(asset.id)}
+                      className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-white/20 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                    >
+                      <Trash size={18} />
+                    </button>
                   </div>
-                </div>
-                <div className="flex items-center gap-8">
-                  <span className="text-2xl font-black font-mono text-white">
-                    {asset.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </span>
-                  <button 
-                    onClick={() => removeAsset(asset.id)}
-                    className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-white/20 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                  >
-                    <Trash size={18} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
 
           {assets.length === 0 && (

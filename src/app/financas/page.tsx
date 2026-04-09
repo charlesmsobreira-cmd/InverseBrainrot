@@ -129,10 +129,10 @@ export default function FinancePage() {
   };
 
   const dashboardCategories = [
-    { id: 'Equities', label: "Equities", color: "#FFFFFF" },
-    { id: 'Fixed Income', label: "Fixed Income", color: "#A1A1AA" },
-    { id: 'Alternatives', label: "Alternatives", color: "#52525B" },
-    { id: 'Liquidity', label: "Liquidity", color: "#27272A" }
+    { id: 'Equities', label: "Equities", color: "#00D1FF" },
+    { id: 'Fixed Income', label: "Fixed Income", color: "#8B5CF6" },
+    { id: 'Alternatives', label: "Alternatives", color: "#F59E0B" },
+    { id: 'Liquidity', label: "Liquidity", color: "#10B981" }
   ];
 
   const processedCategories = dashboardCategories.map(cat => ({
