@@ -30,7 +30,8 @@ export default function FinancePage() {
   const [quote, setQuote] = useState(financeQuotes[0]);
   
   // -- Finance State --
-  const [patrimonio, setPatrimonio] = useState(14290.55);
+  const [portfolio, setPortfolio] = useState<any[]>([]);
+  const [patrimonio, setPatrimonio] = useState(0);
   const [limit, setLimit] = useState(5000.00);
   
   const [expenses, setExpenses] = useState<{id: string, label: string, value: number}[]>([
@@ -55,11 +56,21 @@ export default function FinancePage() {
     setQuote(financeQuotes[seed % financeQuotes.length]);
 
     const savedData = localStorage.getItem('finance_data_v3');
+    const savedPortfolio = localStorage.getItem('finance_portfolio');
+
     if (savedData) {
       const parsed = JSON.parse(savedData);
-      setPatrimonio(parsed.patrimonio || 14290.55);
       setLimit(parsed.limit || 5000.00);
       if (parsed.expenses) setExpenses(parsed.expenses);
+    }
+
+    if (savedPortfolio) {
+      const parsed = JSON.parse(savedPortfolio);
+      setPortfolio(parsed);
+      const total = parsed.reduce((acc: number, curr: any) => acc + curr.value, 0);
+      setPatrimonio(total);
+    } else {
+      setPatrimonio(14290.55); // Fallback
     }
 
     return () => { document.body.style.backgroundColor = ''; };
@@ -88,7 +99,32 @@ export default function FinancePage() {
   // -- Calculations --
   const spent = expenses.reduce((acc, curr) => acc + curr.value, 0);
   const spentPercentage = Math.min((spent / (limit || 1)) * 100, 100);
-  const remaining = Math.max(limit - spent, 0);
+  
+  // Portfolio Calculations
+  const totalInvested = portfolio.reduce((acc, curr) => acc + curr.value, 0);
+  
+  const getCategoryStats = (category: string) => {
+    const total = portfolio.filter(p => p.category === category).reduce((acc, curr) => acc + curr.value, 0);
+    const percentage = totalInvested > 0 ? (total / totalInvested) * 100 : 0;
+    return { total, percentage };
+  };
+
+  const dashboardCategories = [
+    { id: 'Equities', label: "Equities", color: "#FFFFFF" },
+    { id: 'Fixed Income', label: "Fixed Income", color: "#A1A1AA" },
+    { id: 'Alternatives', label: "Alternatives", color: "#52525B" },
+    { id: 'Liquidity', label: "Liquidity", color: "#27272A" }
+  ];
+
+  const processedCategories = dashboardCategories.map(cat => ({
+    ...cat,
+    val: getCategoryStats(cat.id).percentage
+  }));
+
+  // SVG Chart Math
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  let currentOffset = 0;
 
   return (
     <main className="min-h-screen bg-[#0B0B0C] text-white/90 p-6 md:p-12 lg:p-20 relative selection:bg-white selection:text-black">
@@ -298,22 +334,17 @@ export default function FinancePage() {
               </div>
               <p className="text-xl text-white/30 leading-relaxed max-w-2xl mb-12 font-light">A alocação algorítmica de ativos premium para otimização de risco-retorno sistêmico em horizontes de longo prazo.</p>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                {[
-                  { label: "Equities", val: "45%", color: "#FFFFFF" },
-                  { label: "Fixed Income", val: "30%", color: "#A5C4D4" },
-                  { label: "Alternatives", val: "15%", color: "#84A59D" },
-                  { label: "Liquidity", val: "10%", color: "#6B705C" }
-                ].map((item, idx) => (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+                {processedCategories.map((item, idx) => (
                   <div key={idx} className="space-y-2">
                     <div className="flex justify-between items-end">
                       <span className="text-[10px] font-black uppercase tracking-widest text-white/20">{item.label}</span>
-                      <span className="text-xs font-bold text-white">{item.val}</span>
+                      <span className="text-xs font-bold text-white">{item.val.toFixed(0)}%</span>
                     </div>
                     <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                       <motion.div 
                         initial={{ width: 0 }}
-                        whileInView={{ width: item.val }}
+                        whileInView={{ width: `${item.val}%` }}
                         style={{ backgroundColor: item.color }}
                         className="h-full"
                       />
@@ -321,6 +352,13 @@ export default function FinancePage() {
                   </div>
                 ))}
               </div>
+
+              <Link href="/financas/carteira">
+                 <button className="flex items-center gap-3 px-8 py-5 bg-white text-black text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5">
+                   Ver minha carteira
+                   <ArrowRight size={14} weight="bold" />
+                 </button>
+              </Link>
             </div>
             
             <div className="w-[480px] h-[480px] relative flex items-center justify-center p-8 scale-110 lg:scale-125">
@@ -345,31 +383,28 @@ export default function FinancePage() {
 
                  {/* Revealed Segment Group */}
                  <g mask="url(#revealMask)">
-                   {/* Slice 1: 45% */}
-                   <circle 
-                     cx="50" cy="50" r="40" fill="transparent" stroke="#FFFFFF" strokeWidth="15" strokeDasharray="113.1 251.3" 
-                   />
-                   {/* Slice 2: 30% */}
-                   <circle 
-                     cx="50" cy="50" r="40" fill="transparent" stroke="#A5C4D4" strokeWidth="15" strokeDasharray="75.4 251.3" strokeDashoffset="-113.1" 
-                   />
-                   {/* Slice 3: 15% */}
-                   <circle 
-                     cx="50" cy="50" r="40" fill="transparent" stroke="#84A59D" strokeWidth="15" strokeDasharray="37.7 251.3" strokeDashoffset="-188.5" 
-                   />
-                   {/* Slice 4: 10% */}
-                   <circle 
-                     cx="50" cy="50" r="40" fill="transparent" stroke="#6B705C" strokeWidth="15" strokeDasharray="25.1 251.3" strokeDashoffset="-226.2" 
-                   />
+                   {processedCategories.map((cat, i) => {
+                     if (cat.val === 0) return null;
+                     const segmentLength = (cat.val / 100) * circumference;
+                     const offset = -currentOffset;
+                     currentOffset += segmentLength;
+                     
+                     return (
+                        <circle 
+                          key={cat.id}
+                          cx="50" cy="50" r="40" fill="transparent" 
+                          stroke={cat.color} strokeWidth="15" 
+                          strokeDasharray={`${segmentLength} ${circumference}`} 
+                          strokeDashoffset={offset}
+                          className="transition-all duration-1000"
+                        />
+                     );
+                   })}
                  </g>
                </svg>
                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                  <div className="flex flex-col items-center">
-                   <span className="text-xs font-black uppercase tracking-[0.4em] text-white/20 mb-2">Portfolio</span>
-                   <div className="text-center">
-                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 block">Alpha</span>
-                     <span className="text-6xl font-black text-white leading-none">4.0</span>
-                   </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/10">Portfolio</span>
                  </div>
                </div>
             </div>
@@ -388,16 +423,10 @@ export default function FinancePage() {
               <Diamond size={16} weight="fill" />
               <span className="text-[11px] font-black uppercase tracking-[0.4em]">Evolução Patrimonial</span>
             </div>
-            {isEditing ? (
-              <input 
-                type="number" step="0.01" value={patrimonio} onChange={e => setPatrimonio(parseFloat(e.target.value))}
-                className="bg-white/5 border-b border-white text-6xl font-black text-white font-mono outline-none text-center max-w-xl" 
-              />
-            ) : (
-              <h3 className="text-6xl font-black text-white font-mono tracking-tighter" onClick={() => setIsEditing(true)}>
-                {patrimonio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </h3>
-            )}
+            
+            <h3 className="text-6xl font-black text-white font-mono tracking-tighter">
+              {patrimonio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </h3>
           </div>
 
           <div className="h-64 w-full flex items-end relative overflow-visible opacity-50 brightness-150">
@@ -413,6 +442,8 @@ export default function FinancePage() {
               />
             </svg>
           </div>
+        </motion.div>
+
         </motion.div>
 
         {/* Row 5: Decorative Divider */}
