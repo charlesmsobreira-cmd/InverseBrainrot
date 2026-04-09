@@ -133,18 +133,18 @@ export default function InboxPage() {
                     key={item.id}
                     className="group p-6 bg-white border border-black/5 rounded-[2rem] flex items-center justify-between hover:border-black/20 transition-all shadow-sm"
                   >
-                    <span className="text-lg font-bold tracking-tight">{item.text}</span>
-                    <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold tracking-tight break-words min-w-0 flex-1 mr-6">{item.text}</span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
                        <button 
                          onClick={() => promoteToTask(item)}
-                         className="flex items-center gap-2 px-5 py-3 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                         className="flex items-center gap-2 px-5 py-3 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg whitespace-nowrap"
                        >
                          Mover para To-Do
                          <Check size={14} weight="bold" />
                        </button>
                        <button 
                          onClick={() => removeCapture(item.id)}
-                         className="w-10 h-10 rounded-full flex items-center justify-center text-black/10 hover:text-red-500 hover:bg-red-500/5 transition-all"
+                         className="w-10 h-10 rounded-full flex items-center justify-center text-black/10 hover:text-red-500 hover:bg-red-500/5 transition-all flex-shrink-0"
                        >
                          <Trash size={18} />
                        </button>

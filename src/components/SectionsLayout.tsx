@@ -234,17 +234,17 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
                       className={`flex items-center justify-between p-6 rounded-[1.5rem] border transition-all cursor-pointer group/item ${task.done ? 'bg-neutral-100 border-transparent text-black/20' : 'bg-white border-black/5 hover:border-black/20 text-black shadow-sm'}`}
                       onClick={() => toggleTask(task.id)}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${task.done ? 'bg-black border-black scale-90' : 'border-black/10'}`}>
                           {task.done && <CheckCircle size={12} weight="fill" className="text-white" />}
                         </div>
-                        <span className={`text-base font-semibold tracking-tight ${task.done ? 'line-through' : ''}`}>
+                        <span className={`text-base font-semibold tracking-tight break-words overflow-hidden min-w-0 ${task.done ? 'line-through' : ''}`}>
                           {task.text}
                         </span>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                        className="opacity-0 group-hover/item:opacity-100 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-black/20 hover:text-black transition-all"
+                        className="opacity-0 group-hover/item:opacity-100 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-black/20 hover:text-black transition-all ml-4"
                       >
                         <Trash size={14} />
                       </button>
