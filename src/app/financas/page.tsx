@@ -270,7 +270,7 @@ export default function FinancePage() {
             </div>
             
             {/* Full-width Horizontal Pill Bar Chart (B&W Style) */}
-            <div className="w-full h-14 bg-white/5 rounded-full border border-white/10 overflow-hidden relative p-1.5 shadow-inner group">
+            <div className="w-full h-14 bg-white/5 rounded-full border border-white/10 overflow-hidden relative shadow-inner group">
               {/* Centered Label with Mix-Blend-Mode for high-end look */}
               <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                 <span className="text-sm font-black text-white mix-blend-difference tracking-tight">
@@ -394,7 +394,7 @@ export default function FinancePage() {
                           key={cat.id}
                           cx="50" cy="50" r="40" fill="transparent" 
                           stroke={cat.color} strokeWidth="15" 
-                          strokeDasharray={`${segmentLength} ${circumference}`} 
+                          strokeDasharray={`${segmentLength + 0.8} ${circumference}`} 
                           strokeDashoffset={offset}
                           className="transition-all duration-1000"
                         />
