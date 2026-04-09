@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, Star, StarHalf, Heart, CheckCircle, WarningCircle, ListBullets } from '@phosphor-icons/react';
+import { ArrowLeft, X, Star, StarHalf, Heart, CheckCircle, WarningCircle, ListBullets, Trash } from '@phosphor-icons/react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +29,8 @@ interface FavoriteListProps {
   logs: LogItem[];
   category: string;
   textColor: string;
+  isDeleteMode: boolean;
+  onDelete: (id: string) => void;
 }
 
 interface LogModalProps {
@@ -48,6 +50,8 @@ interface CategorySectionProps {
   logs: LogItem[];
   reverse?: boolean;
   onOpenModal: (cat: string) => void;
+  isDeleteMode: boolean;
+  onDelete: (id: string) => void;
 }
 
 // --- Sub-componente: Notificação Customizada (Toast) ---
@@ -71,7 +75,7 @@ const Toast = ({ message, type, onClose }: ToastProps) => (
 );
 
 // --- Sub-componente: Lista de Favoritos/Wishlist ---
-const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
+const FavoriteList = ({ logs, category, textColor, isDeleteMode, onDelete }: FavoriteListProps) => {
   const mapCategory: Record<string, string> = {
     'Músicas': 'Música',
     'Livros': 'Livro',
@@ -113,11 +117,25 @@ const FavoriteList = ({ logs, category, textColor }: FavoriteListProps) => {
         <motion.li
           key={log.id}
           variants={item as any}
-          className={`w-full py-2.5 border-b text-center text-sm md:text-base font-bold tracking-tight last:border-0 ${
+          className={`w-full py-2.5 border-b text-center text-sm md:text-base font-bold tracking-tight last:border-0 relative group ${
             textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'
           }`}
         >
-          {log.title}
+          <span className="relative z-10">{log.title}</span>
+          
+          <AnimatePresence>
+            {isDeleteMode && (
+              <motion.button
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                onClick={() => onDelete(log.id)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-red-500 hover:scale-110 transition-transform"
+              >
+                <Trash size={18} weight="bold" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </motion.li>
       ))}
     </motion.ul>
@@ -297,7 +315,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
 };
 
 // --- Sub-componente: Seção de Categoria ---
-const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, reverse = false, onOpenModal }: CategorySectionProps) => (
+const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, reverse = false, onOpenModal, isDeleteMode, onDelete }: CategorySectionProps) => (
   <section className={`min-h-screen w-full flex flex-col justify-center relative overflow-hidden ${bgColor} ${textColor} px-6 md:px-24 py-20`}>
     <div className={`max-w-[1400px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center ${reverse ? 'md:flex-row-reverse' : ''}`}>
       <div className="flex flex-col items-center text-center w-full">
@@ -308,7 +326,7 @@ const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, rev
            </div>
            
            <div className="w-full flex flex-col items-center min-h-[260px] justify-center">
-             <FavoriteList logs={logs} category={title} textColor={textColor} />
+             <FavoriteList logs={logs} category={title} textColor={textColor} isDeleteMode={isDeleteMode} onDelete={onDelete} />
            </div>
 
            <motion.button
@@ -333,6 +351,7 @@ export default function MuralPage() {
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   const [modalCategory, setModalCategory] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogItem[]>([]);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
 
   const loadLogs = useCallback(async () => {
     const { data, error } = await supabase
@@ -347,6 +366,18 @@ export default function MuralPage() {
       })));
     }
   }, []);
+
+  const handleDeleteLog = async (id: string) => {
+    const { error } = await supabase.from('highlights').delete().eq('id', id);
+    if (error) {
+      showNotification('Erro ao remover registro', 'error');
+      return;
+    }
+    showNotification('Registro removido');
+    loadLogs();
+    // Keep it updated for the home dashboard too
+    window.dispatchEvent(new Event('highlightsUpdated'));
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -368,11 +399,18 @@ export default function MuralPage() {
         </Link>
       </div>
 
-      <CategorySection title="Músicas" subtitle="Listening Party" bgColor="bg-[#E21B22]" textColor="text-white" image="/mural/music.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} />
-      <CategorySection title="Livros" subtitle="Current Session" bgColor="bg-white" textColor="text-black" image="/mural/books.png" reverse={true} logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} />
-      <CategorySection title="Filmes" subtitle="Wishlist" bgColor="bg-black" textColor="text-white" image="/mural/movies.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} />
+      <CategorySection title="Músicas" subtitle="Listening Party" bgColor="bg-[#E21B22]" textColor="text-white" image="/mural/music.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} />
+      <CategorySection title="Livros" subtitle="Current Session" bgColor="bg-white" textColor="text-black" image="/mural/books.png" reverse={true} logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} />
+      <CategorySection title="Filmes" subtitle="Wishlist" bgColor="bg-black" textColor="text-white" image="/mural/movies.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} />
 
-      <footer className="py-20 bg-black text-white text-center"><Link href="/"><button className="px-12 py-4 border border-white/30 rounded-full hover:bg-white hover:text-black transition-all font-bold tracking-widest uppercase">Voltar ao Sistema</button></Link></footer>
+      <footer className="py-20 bg-black text-white text-center">
+        <button 
+          onClick={() => setIsDeleteMode(!isDeleteMode)}
+          className={`px-12 py-4 border rounded-full transition-all font-bold tracking-widest uppercase text-[10px] ${isDeleteMode ? 'bg-red-500 border-red-500 text-white' : 'border-white/30 hover:bg-white hover:text-black'}`}
+        >
+          {isDeleteMode ? 'Concluir Edição' : 'Gerenciar Registros'}
+        </button>
+      </footer>
 
       <LogModal isOpen={!!modalCategory} onClose={() => setModalCategory(null)} category={modalCategory} onNotify={showNotification} onRefresh={loadLogs} />
 
