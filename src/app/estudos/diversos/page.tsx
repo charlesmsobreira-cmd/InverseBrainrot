@@ -4,10 +4,12 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, NotePencil, Plus, Link as LinkIcon, Trash, FileText, X, Stack } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
+import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
 import { supabase } from '@/lib/supabase';
 
 type LinkType = {
@@ -50,11 +52,19 @@ const defaultPage: PageType = {
   attachments: []
 };
 
-// Split Modes:
-// 0: Notepad 100% | Manager 0%
-// 1: Notepad 50%  | Manager 50%
-// 2: Notepad 70%  | Manager 30% (Default reversed weight)
 // 3: Notepad 0%   | Manager 100%
+
+export default function DiversosPage() {
+  const [pages, setPages] = useState<PageType[]>([]);
+  const [activePageId, setActivePageId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Link addition form state
+  const [isAddingLink, setIsAddingLink] = useState(false);
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newLinkTitle, setNewLinkTitle] = useState('');
+
+  const activePage = pages.find(p => p.id === activePageId);
 
   // --- Tiptap Editor ---
   const editor = useEditor({
@@ -64,6 +74,7 @@ const defaultPage: PageType = {
       Placeholder.configure({
         placeholder: 'Comece a digitar seus pensamentos...',
       }),
+      BubbleMenuExtension,
     ],
     content: '',
     onUpdate: ({ editor }) => {
@@ -313,7 +324,7 @@ const defaultPage: PageType = {
             <>
             <div className="flex-1 overflow-y-auto no-scrollbar relative">
               {editor && (
-                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="flex bg-zinc-900 border border-white/10 rounded-xl overflow-hidden shadow-2xl backdrop-blur-xl">
+                <BubbleMenu editor={editor} className="bg-zinc-900 border border-white/10 shadow-2xl rounded-xl overflow-hidden flex items-center p-1 min-w-[150px] z-50">
                   {isAddingAnnotation ? (
                     <div className="flex items-center p-1 gap-1">
                       <input 
