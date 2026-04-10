@@ -232,6 +232,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       : `Na wishlist.`;
 
     const newLog = {
+      id: Date.now().toString(), // Re-adicionando ID manual por compatibilidade
       title: name,
       description: descriptionText,
       subtitle: extra,
@@ -244,8 +245,8 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
 
     const { error } = await supabase.from('highlights').insert([newLog]);
     if (error) {
-      console.error('Database insertion error:', error);
-      onNotify('Erro ao salvar no banco de dados!', 'error');
+      console.error('Database insertion error detail:', error);
+      onNotify(`Erro no banco: ${error.message}`, 'error');
       return;
     }
 
