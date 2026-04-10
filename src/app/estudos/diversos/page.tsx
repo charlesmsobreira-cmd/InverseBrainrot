@@ -4,8 +4,11 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, NotePencil, Plus, Link as LinkIcon, Trash, FileText, X, Stack } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Highlight from '@tiptap/extension-highlight';
+import Placeholder from '@tiptap/extension-placeholder';
 import { supabase } from '@/lib/supabase';
-
 
 type LinkType = {
   id: string;
@@ -13,18 +16,38 @@ type LinkType = {
   title: string;
 };
 
+type HighlightType = {
+  id: string;
+  text: string;
+  note: string;
+  color: string;
+  createdAt: string;
+};
+
+type AttachmentType = {
+  id: string;
+  name: string;
+  url: string;
+  type: string; // 'image' | 'pdf' | 'other'
+  size: number;
+};
+
 type PageType = {
   id: string;
   title: string;
-  notes: string;
+  notes: string; // This will now store HTML
   links: LinkType[];
+  highlights: HighlightType[];
+  attachments: AttachmentType[];
 };
 
 const defaultPage: PageType = {
   id: 'default-1',
   title: 'Minhas Anotações Iniciais',
   notes: '',
-  links: []
+  links: [],
+  highlights: [],
+  attachments: []
 };
 
 // Split Modes:
@@ -33,18 +56,49 @@ const defaultPage: PageType = {
 // 2: Notepad 70%  | Manager 30% (Default reversed weight)
 // 3: Notepad 0%   | Manager 100%
 
-export default function DiversosPage() {
-  const [pages, setPages] = useState<PageType[]>([]);
-  const [activePageId, setActivePageId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // --- Tiptap Editor ---
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Highlight.configure({ multicolor: true }),
+      Placeholder.configure({
+        placeholder: 'Comece a digitar seus pensamentos...',
+      }),
+    ],
+    content: '',
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      updateActivePageNotes(html);
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-invert max-w-none focus:outline-none min-h-[500px] text-zinc-100 selection:bg-yellow-400/30 text-lg leading-relaxed font-sans',
+      },
+    },
+  });
 
+  // Custom editor styles for placeholder
+  const editorStyles = `
+    .ProseMirror p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder);
+      float: left;
+      color: #3f3f46;
+      pointer-events: none;
+      height: 0;
+    }
+    .ProseMirror mark {
+      background-color: #fbbf2433;
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+  `;
 
-  // Link addition form state
-  const [isAddingLink, setIsAddingLink] = useState(false);
-  const [newLinkUrl, setNewLinkUrl] = useState('');
-  const [newLinkTitle, setNewLinkTitle] = useState('');
-
-  const activePage = pages.find(p => p.id === activePageId);
+  // Update editor content when active page changes
+  useEffect(() => {
+    if (editor && activePage && editor.getHTML() !== activePage.notes) {
+      editor.commands.setContent(activePage.notes || '');
+    }
+  }, [activePageId, editor]); // Run once when activePageId changes
 
   // --- Load pages from Supabase on mount ---
   useEffect(() => {
@@ -52,14 +106,19 @@ export default function DiversosPage() {
       setIsLoading(true);
       const { data } = await supabase.from('notepad_pages').select('*').order('created_at', { ascending: true });
       if (data && data.length > 0) {
-        setPages(data.map(p => ({ ...p, links: p.links || [] })));
+        setPages(data.map(p => ({ 
+          ...p, 
+          links: p.links || [],
+          highlights: p.highlights || [],
+          attachments: p.attachments || []
+        })));
       }
       setIsLoading(false);
     };
     loadPages();
   }, []);
 
-  // --- Debounced auto-save for notes and title ---
+  // --- Debounced auto-save ---
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const persistPage = useCallback((updatedPage: PageType) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -68,6 +127,8 @@ export default function DiversosPage() {
         title: updatedPage.title,
         notes: updatedPage.notes,
         links: updatedPage.links,
+        highlights: updatedPage.highlights,
+        attachments: updatedPage.attachments,
         updated_at: new Date().toISOString()
       }).eq('id', updatedPage.id);
     }, 800);
@@ -98,7 +159,9 @@ export default function DiversosPage() {
       id: Date.now().toString(),
       title: '',
       notes: '',
-      links: []
+      links: [],
+      highlights: [],
+      attachments: []
     };
     const { error } = await supabase.from('notepad_pages').insert([newPage]);
     if (!error) {
@@ -106,6 +169,80 @@ export default function DiversosPage() {
       setActivePageId(newPage.id);
       setIsAddingLink(false);
     }
+  };
+
+  // --- Highlighting Logic ---
+  const [annotationNote, setAnnotationNote] = useState('');
+  const [isAddingAnnotation, setIsAddingAnnotation] = useState(false);
+
+  const addHighlight = () => {
+    if (!editor || !activePageId || !annotationNote) return;
+    
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, ' ');
+
+    const newHighlight: HighlightType = {
+      id: Date.now().toString(),
+      text: selectedText,
+      note: annotationNote,
+      color: '#fbbf24', // yellow-400
+      createdAt: new Date().toISOString()
+    };
+
+    editor.chain().focus().setHighlight({ color: '#fbbf2433' }).run();
+
+    const updatedHighlights = [...(activePage?.highlights || []), newHighlight];
+    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, highlights: updatedHighlights } : p));
+    
+    const page = { ...activePage!, highlights: updatedHighlights };
+    persistPage(page);
+    
+    setIsAddingAnnotation(false);
+    setAnnotationNote('');
+  };
+
+  const deleteHighlight = (id: string) => {
+    if (!activePageId) return;
+    const updatedHighlights = activePage!.highlights.filter(h => h.id !== id);
+    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, highlights: updatedHighlights } : p));
+    persistPage({ ...activePage!, highlights: updatedHighlights });
+  };
+
+  // --- File Upload Logic ---
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activePageId) return;
+
+    setIsUploading(true);
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('attachments')
+      .upload(fileName, file);
+
+    if (error) {
+      console.error('Error uploading:', error);
+      setIsUploading(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('attachments')
+      .getPublicUrl(fileName);
+
+    const newAttachment: AttachmentType = {
+      id: Date.now().toString(),
+      name: file.name,
+      url: publicUrl,
+      type: file.type.startsWith('image') ? 'image' : file.type === 'application/pdf' ? 'pdf' : 'other',
+      size: file.size
+    };
+
+    const updatedAttachments = [...(activePage?.attachments || []), newAttachment];
+    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, attachments: updatedAttachments } : p));
+    persistPage({ ...activePage!, attachments: updatedAttachments });
+    setIsUploading(false);
   };
 
   const deletePage = async (id: string, e: React.MouseEvent) => {
@@ -138,9 +275,9 @@ export default function DiversosPage() {
     await supabase.from('notepad_pages').update({ links: updatedLinks, updated_at: new Date().toISOString() }).eq('id', activePageId);
     setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: updatedLinks } : p));
   };
-
   return (
     <main className="h-screen overflow-hidden flex flex-col transition-colors duration-1000 bg-[#050505] text-zinc-400">
+      <style dangerouslySetInnerHTML={{ __html: editorStyles }} />
       {/* Header Clássico */}
       <div className="p-6 md:px-12 flex-shrink-0 flex items-center justify-between border-b border-white/5 transition-colors duration-1000 relative z-20 bg-black/40 backdrop-blur-xl">
         <Link href="/estudos">
@@ -174,29 +311,60 @@ export default function DiversosPage() {
           ) : activePage ? (
 
             <>
-              <div className="p-6 md:px-8 md:pt-8 md:pb-4 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <NotePencil size={28} className="text-azure-500 flex-shrink-0" />
+            <div className="flex-1 overflow-y-auto no-scrollbar relative">
+              {editor && (
+                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="flex bg-zinc-900 border border-white/10 rounded-xl overflow-hidden shadow-2xl backdrop-blur-xl">
+                  {isAddingAnnotation ? (
+                    <div className="flex items-center p-1 gap-1">
+                      <input 
+                        type="text" 
+                        placeholder="Escreva sua anotação..." 
+                        className="bg-transparent border-none outline-none text-xs px-3 py-2 w-48 text-zinc-100 placeholder:text-zinc-500"
+                        value={annotationNote}
+                        onChange={e => setAnnotationNote(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addHighlight()}
+                        autoFocus
+                      />
+                      <button onClick={addHighlight} className="p-2 hover:bg-white/5 text-emerald-400 transition-colors">
+                        <Plus size={16} weight="bold" />
+                      </button>
+                      <button onClick={() => setIsAddingAnnotation(false)} className="p-2 hover:bg-white/5 text-red-400 transition-colors">
+                        <X size={16} weight="bold" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setIsAddingAnnotation(true)}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                    >
+                      <NotePencil size={14} /> Anotar
+                    </button>
+                  )}
+                </BubbleMenu>
+              )}
+
+              <div className="max-w-4xl mx-auto px-6 md:px-12 py-12">
+                <div className="mb-12">
                   <input 
                     type="text" 
                     value={activePage.title}
                     onChange={e => updateActivePageTitle(e.target.value)}
-                    className="text-4xl font-black tracking-tighter bg-transparent outline-none w-full placeholder:text-zinc-400 transition-colors duration-1000 text-white"
+                    className="text-6xl font-black tracking-tighter bg-transparent outline-none w-full placeholder:text-zinc-800 transition-colors duration-1000 text-white leading-none"
                     placeholder="Página Sem Título"
                   />
+                  <div className="flex items-center gap-4 mt-6">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 font-mono">Página Viva</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs mt-2 font-mono uppercase tracking-widest ml-10 transition-colors duration-1000 text-zinc-500">Ambiente de escrita isolado</p>
-              </div>
 
-              <div className="flex-1 overflow-hidden px-6 md:px-8 pb-8 flex flex-col">
-                <textarea 
-                  className="w-full h-full border rounded-[2rem] p-8 focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 resize-none font-mono text-base shadow-sm transition-all duration-1000 leading-relaxed bg-[#0A0A0A] border-white/5 text-zinc-100 placeholder:text-zinc-700"
-                  placeholder="Comece a digitar seus pensamentos, vocabulário novo ou rascunhos aqui..."
-                  value={activePage.notes}
-                  onChange={(e) => updateActivePageNotes(e.target.value)}
-                  spellCheck={false}
-                />
+                <div className="min-h-[60vh]">
+                  <EditorContent editor={editor} />
+                </div>
               </div>
+            </div>
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
@@ -270,72 +438,140 @@ export default function DiversosPage() {
                      </button>
                    </div>
 
-                   {/* Active Page Content (Links) */}
-                   {isActive && (
-                     <div className="px-4 pb-4">
-                       <hr className="border-white/5 mb-4" />
-                       
-                       <div className="flex items-center justify-between mb-3">
-                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Links Inseridos</span>
-                         {!isAddingLink && (
-                           <button onClick={() => setIsAddingLink(true)} className="text-[10px] uppercase font-bold text-zinc-100 hover:text-white transition-colors">
-                             + Novo
-                           </button>
-                         )}
-                       </div>
+                    {/* Active Page Content (Navigation Tabs) */}
+                    {isActive && (
+                      <div className="px-4 pb-4 space-y-6">
+                        <hr className="border-white/5" />
+                        
+                        {/* ── ARQUIVOS E ANEXOS ── */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Arquivos e Anexos</span>
+                            <label className="cursor-pointer text-[10px] uppercase font-bold text-azure-400 hover:text-azure-300 transition-colors flex items-center gap-1">
+                               {isUploading ? 'Enviando...' : '+ Upload'}
+                               <input type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                            </label>
+                          </div>
 
-                       {isAddingLink && (
-                         <div className="p-4 rounded-xl border shadow-sm space-y-3 mb-4 transition-all duration-1000 bg-black/40 border-white/10">
-                           <input 
-                             type="text" placeholder="Nome do link" 
-                             className="w-full text-xs p-2.5 bg-black/50 rounded-lg outline-none focus:ring-1 focus:ring-white/20 text-zinc-100" 
-                             value={newLinkTitle} onChange={e => setNewLinkTitle(e.target.value)} 
-                             autoFocus
-                           />
-                           <input 
-                             type="url" placeholder="URL (ex: https://...)" 
-                             className="w-full text-xs p-2.5 bg-black/50 rounded-lg outline-none focus:ring-1 focus:ring-white/20 text-zinc-100" 
-                             value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} 
-                             onKeyDown={(e) => e.key === 'Enter' && addLink()}
-                           />
-                           <div className="flex gap-2 mt-1">
-                             <button onClick={() => setIsAddingLink(false)} className="flex-1 text-[10px] py-2 text-zinc-500 hover:text-zinc-300 font-medium">Cancelar</button>
-                             <button onClick={addLink} className="flex-1 bg-white hover:bg-zinc-200 text-black text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider transition-colors">Adicionar</button>
-                           </div>
-                         </div>
-                       )}
-
-                       <div className="space-y-1.5">
-                         {page.links.length === 0 && !isAddingLink ? (
-                           <div className="text-center py-4 bg-white/5 rounded-xl border border-white/5 border-dashed">
-                             <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-medium">Nenhum link salvo</p>
-                           </div>
-                         ) : (
-                           page.links.map(link => (
-                             <div
-                               key={link.id}
-                               onClick={() => window.open(link.url, '_blank', 'noopener,noreferrer')}
-                               className="group flex items-center justify-between p-2.5 bg-black/20 rounded-xl border border-white/5 hover:border-white/20 cursor-pointer transition-all shadow-sm"
-                             >
-                               <div className="flex items-center gap-2 overflow-hidden">
-                                 <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
-                                   <LinkIcon size={12} className="text-zinc-400" />
-                                 </div>
-                                 <span className="font-medium text-xs text-zinc-300 truncate">{link.title}</span>
+                          <div className="space-y-2">
+                            {page.attachments.length === 0 ? (
+                               <div className="text-center py-4 bg-white/[0.02] rounded-xl border border-white/5 border-dashed">
+                                 <p className="text-[10px] font-bold text-zinc-700">SEM ANEXOS</p>
                                </div>
-                               <button 
-                                 onClick={(e) => deleteLink(link.id, e)}
-                                 className="opacity-0 group-hover:opacity-100 text-red-400 hover:bg-red-900/20 p-1.5 rounded-md transition-all flex-shrink-0"
-                               >
-                                  <X size={12} weight="bold" />
-                               </button>
-                             </div>
-                           ))
-                         )}
-                       </div>
+                            ) : (
+                               page.attachments.map(att => (
+                                 <div key={att.id} className="group relative bg-black/40 border border-white/5 rounded-xl p-3 flex items-center gap-3 hover:border-white/20 transition-all">
+                                    <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center overflow-hidden border border-white/5">
+                                      {att.type === 'image' ? (
+                                        <img src={att.url} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <FileText size={20} className="text-zinc-600" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                      <p className="text-[11px] font-bold text-zinc-200 truncate">{att.name}</p>
+                                      <p className="text-[9px] text-zinc-600 uppercase font-mono">{(att.size / 1024).toFixed(0)} KB • {att.type}</p>
+                                    </div>
+                                    <button onClick={() => window.open(att.url, '_blank')} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/5 rounded-lg transition-all">
+                                       <LinkIcon size={12} className="text-zinc-400" />
+                                    </button>
+                                 </div>
+                               ))
+                            )}
+                          </div>
+                        </div>
 
-                     </div>
-                   )}
+                        {/* ── ANOTAÇÕES FLUTUANTES ── */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Anotações Flutuantes</span>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {page.highlights.length === 0 ? (
+                               <div className="text-center py-4 bg-white/[0.02] rounded-xl border border-white/5 border-dashed">
+                                 <p className="text-[10px] font-bold text-zinc-700">NENHUMA ANOTAÇÃO</p>
+                               </div>
+                            ) : (
+                               page.highlights.map(hl => (
+                                 <motion.div 
+                                   initial={{ opacity: 0, x: 20 }}
+                                   animate={{ opacity: 1, x: 0 }}
+                                   key={hl.id} 
+                                   className="relative group bg-zinc-900/50 border-l-2 border-yellow-500/50 p-3 rounded-r-xl"
+                                 >
+                                    <div className="flex justify-between items-start gap-2 mb-2">
+                                      <p className="text-[10px] font-black uppercase italic text-zinc-500 truncate max-w-[150px]">"{hl.text}"</p>
+                                      <button onClick={() => deleteHighlight(hl.id)} className="opacity-0 group-hover:opacity-100 text-zinc-700 hover:text-white transition-colors">
+                                        <Trash size={12} />
+                                      </button>
+                                    </div>
+                                    <p className="text-xs text-zinc-300 leading-relaxed font-medium">{hl.note}</p>
+                                    <span className="text-[8px] font-mono text-zinc-700 uppercase mt-2 block">{new Date(hl.createdAt).toLocaleDateString()}</span>
+                                 </motion.div>
+                               ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ── LINKS SALVOS ── */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Links Inseridos</span>
+                            {!isAddingLink && (
+                              <button onClick={() => setIsAddingLink(true)} className="text-[10px] uppercase font-bold text-azure-400 hover:text-azure-300 transition-colors">
+                                + Novo
+                              </button>
+                            )}
+                          </div>
+
+                          {isAddingLink && (
+                            <div className="p-4 rounded-xl border shadow-sm space-y-3 mb-4 transition-all duration-1000 bg-black/40 border-white/10">
+                              <input 
+                                type="text" placeholder="Nome do link" 
+                                className="w-full text-xs p-2.5 bg-black/50 rounded-lg outline-none focus:ring-1 focus:ring-white/20 text-zinc-100" 
+                                value={newLinkTitle} onChange={e => setNewLinkTitle(e.target.value)} 
+                                autoFocus
+                              />
+                              <input 
+                                type="url" placeholder="URL (ex: https://...)" 
+                                className="w-full text-xs p-2.5 bg-black/50 rounded-lg outline-none focus:ring-1 focus:ring-white/20 text-zinc-100" 
+                                value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} 
+                                onKeyDown={(e) => e.key === 'Enter' && addLink()}
+                              />
+                              <div className="flex gap-2 mt-1">
+                                <button onClick={() => setIsAddingLink(false)} className="flex-1 text-[10px] py-2 text-zinc-500 hover:text-zinc-300 font-medium">Cancelar</button>
+                                <button onClick={addLink} className="flex-1 bg-white hover:bg-zinc-200 text-black text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider transition-colors">Adicionar</button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5">
+                            {page.links.map(link => (
+                              <div
+                                key={link.id}
+                                onClick={() => window.open(link.url, '_blank', 'noopener,noreferrer')}
+                                className="group flex items-center justify-between p-2.5 bg-black/20 rounded-xl border border-white/5 hover:border-white/20 cursor-pointer transition-all shadow-sm"
+                              >
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                  <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
+                                    <LinkIcon size={12} className="text-zinc-400" />
+                                  </div>
+                                  <span className="font-medium text-xs text-zinc-300 truncate">{link.title}</span>
+                                </div>
+                                <button 
+                                  onClick={(e) => deleteLink(link.id, e)}
+                                  className="opacity-0 group-hover:opacity-100 text-red-100/40 hover:text-red-400 p-1.5 rounded-md transition-all flex-shrink-0"
+                                >
+                                   <X size={12} weight="bold" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
                  </div>
                );
              })}
