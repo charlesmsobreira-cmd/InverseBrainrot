@@ -562,12 +562,12 @@ export function SectionsLayout() {
     for (let i = 0; i < todayStr.length; i++) seed += todayStr.charCodeAt(i);
     setQuoteIdx(seed % ITALIAN_EXPRESSIONS.length);
 
-    // Auto-delete logic: Filter tasks older than 5 days
-    const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+    // Auto-delete logic: Filter tasks older than 1 day (24h)
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const nowTime = Date.now();
     const filteredTasks = initialTasks.filter((t: Task) => {
       if (t.done && t.completedAt) {
-        return nowTime - t.completedAt < FIVE_DAYS_MS;
+        return nowTime - t.completedAt < ONE_DAY_MS;
       }
       return true;
     });
