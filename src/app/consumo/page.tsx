@@ -198,9 +198,12 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
     } catch (error: any) {
       console.error('Upload error:', error);
       // Melhora a mensagem de erro para o usuário
-      const msg = error.message?.includes('bucket not found') || error.status === 404
-        ? 'Erro: O bucket "mural" não existe no Supabase!' 
-        : 'Erro ao carregar imagem no Storage!';
+      let msg = 'Erro ao carregar imagem no Storage!';
+      if (error.message?.includes('bucket not found') || error.status === 404) {
+        msg = 'Erro: O bucket "mural" não existe no Supabase!';
+      } else if (error.message?.includes('new row violates row-level security') || error.status === 403) {
+        msg = 'Erro: Verifique se o bucket "mural" está como PUBLIC no Supabase.';
+      }
       onNotify(msg, 'error');
     } finally {
       setIsUploading(false);

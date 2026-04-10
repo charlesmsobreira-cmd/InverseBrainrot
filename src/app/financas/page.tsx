@@ -285,8 +285,11 @@ export default function FinancePage() {
               <span className="text-4xl font-black text-white leading-none">{spentPercentage.toFixed(0)}%</span>
             </div>
             
-            {/* Full-width Horizontal Pill Bar Chart (Dual-Layer Clip-Path for perfect legibility) */}
-            <div className="w-full h-14 bg-white/10 rounded-full border border-white/10 overflow-hidden relative shadow-inner group">
+            {/* Full-width Horizontal Pill Bar Chart (Surgical Clip-Path for perfect legibility) */}
+            <div 
+              className="w-full h-14 bg-white/10 rounded-full border border-white/10 overflow-hidden relative shadow-inner group"
+              style={{ '--progress': `${spentPercentage}%` } as any}
+            >
               
               {/* Layer 1: Text when over the dark background (White text) */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -300,17 +303,18 @@ export default function FinancePage() {
                 initial={{ width: 0 }} 
                 animate={{ width: `${spentPercentage}%` }} 
                 transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
-                className="h-full bg-white rounded-full relative overflow-hidden"
+                className="h-full bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              />
+
+              {/* Layer 2: Text when over the white bar (Black text) - CLIPPED */}
+              <div 
+                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                style={{ clipPath: `inset(0 calc(100% - var(--progress)) 0 0)` }}
               >
-                {/* Layer 2: Text when over the white bar (Black text) */}
-                {/* This text is identical but clipped by the progress bar container */}
-                <div className="absolute inset-0 flex items-center justify-center w-[100vw] left-0 pointer-events-none">
-                   {/* We use a fixed width or calculation to ensure it aligns with the background text */}
-                   <span className="text-[11px] font-black text-black tracking-[0.2em] uppercase whitespace-nowrap" style={{ width: '100%', textAlign: 'center' }}>
-                    {spent.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                   </span>
-                </div>
-              </motion.div>
+                <span className="text-[11px] font-black text-black tracking-[0.2em] uppercase">
+                  {spent.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </span>
+              </div>
             </div>
 
             <div className="flex justify-center items-center pt-6 border-t border-white/5">
