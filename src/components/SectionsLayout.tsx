@@ -190,11 +190,10 @@ const ItalianQuoteModal = ({ isOpen, onClose, quote }: ItalianQuoteModalProps) =
         <div className="flex flex-col h-full p-10 relative z-10">
           <div className="mb-4" />
           <div className="flex items-center gap-2 mb-3 opacity-40">
-            <span className="text-lg">🇮🇹</span>
             <span className="text-[9px] font-black uppercase tracking-[0.4em]">Espressione del Giorno</span>
           </div>
 
-          <h3 className="text-4xl font-black uppercase tracking-tighter leading-tight mb-4 italic text-white underline decoration-emerald-500/30 underline-offset-8">
+          <h3 className="text-4xl font-black uppercase tracking-tighter leading-tight mb-4 italic text-white">
             {quote.phrase}
           </h3>
 
@@ -204,13 +203,13 @@ const ItalianQuoteModal = ({ isOpen, onClose, quote }: ItalianQuoteModalProps) =
             &quot;{quote.translation}&quot;
           </p>
 
-          <p className="text-sm text-zinc-600 font-mono italic leading-relaxed">
+          <p className="text-sm text-zinc-600 font-mono italic leading-relaxed mb-12">
             {quote.context}
           </p>
 
           <button
             onClick={onClose}
-            className="mt-auto w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] bg-white text-black hover:bg-zinc-200 transition-all shadow-xl"
+            className="w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] bg-white text-black hover:bg-zinc-200 transition-all shadow-xl"
           >
             Capito!
           </button>
@@ -372,9 +371,11 @@ function StudySection({ onOpenQuote }: StudySectionProps) {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onOpenQuote}
-            className="w-14 h-14 rounded-full flex items-center justify-center bg-white text-black cursor-pointer shadow-xl text-2xl"
+            className="w-14 h-14 rounded-full flex overflow-hidden border border-white/10 shadow-xl cursor-pointer"
           >
-            🇮🇹
+            <div className="w-1/3 h-full bg-[#009246]" />
+            <div className="w-1/3 h-full bg-white" />
+            <div className="w-1/3 h-full bg-[#ce2b37]" />
           </motion.button>
           <Link href="/estudos">
             <motion.button
