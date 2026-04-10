@@ -5,6 +5,7 @@ import { CheckCircle, ArrowRight, X, Sparkle, MusicNotes, BookmarkSimple, FilmSt
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Footer } from './Footer';
+import { ITALIAN_EXPRESSIONS } from '@/app/estudos/flashcards/knowledge_base';
 
 // --- Interfaces ---
 interface Recommendation {
@@ -150,6 +151,75 @@ const RecommendationModal = ({ isOpen, onClose, onSave, recommendation, isSaved 
   );
 };
 
+// --- Sub-componente: Modal de Expressão Italiana (Cultura) ---
+interface ItalianQuoteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  quote: typeof ITALIAN_EXPRESSIONS[0] | null;
+}
+
+const ItalianQuoteModal = ({ isOpen, onClose, quote }: ItalianQuoteModalProps) => {
+  if (!isOpen || !quote) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/85 backdrop-blur-2xl"
+      />
+
+      <motion.div
+        initial={{ scale: 0.85, opacity: 0, y: 40 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        className="relative w-full max-w-sm bg-[#0f0f0f] border border-white/8 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] text-white overflow-hidden"
+        style={{ minHeight: '500px' }}
+      >
+        <div className="absolute top-0 left-0 w-full h-64 opacity-30 pointer-events-none bg-gradient-to-b from-emerald-500/20 via-white/5 to-transparent" />
+
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-6 z-20 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/30 hover:text-white hover:bg-white/10 transition-all"
+        >
+          <X size={16} weight="bold" />
+        </button>
+
+        <div className="flex flex-col h-full p-10 relative z-10">
+          <div className="mb-4" />
+          <div className="flex items-center gap-2 mb-3 opacity-40">
+            <span className="text-lg">🇮🇹</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.4em]">Espressione del Giorno</span>
+          </div>
+
+          <h3 className="text-4xl font-black uppercase tracking-tighter leading-tight mb-4 italic text-white underline decoration-emerald-500/30 underline-offset-8">
+            {quote.phrase}
+          </h3>
+
+          <div className="w-8 h-px bg-white/10 my-8" />
+
+          <p className="text-xl text-zinc-400 font-medium leading-relaxed italic mb-6">
+            &quot;{quote.translation}&quot;
+          </p>
+
+          <p className="text-sm text-zinc-600 font-mono italic leading-relaxed">
+            {quote.context}
+          </p>
+
+          <button
+            onClick={onClose}
+            className="mt-auto w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] bg-white text-black hover:bg-zinc-200 transition-all shadow-xl"
+          >
+            Capito!
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // --- Dados de Recomendação ---
 const recommendations: Recommendation[] = [
   { category: 'Música', title: 'Flashing Lights', author: 'Kanye West', briefing: 'Um clássico do hip-hop orquestral que capta a energia vibrante de uma cidade à noite. Produção impecável e atmosfera luxuosa.' },
@@ -270,7 +340,11 @@ function RoutineSection({ tasks, toggleTask, deleteTask }: RoutineSectionProps) 
 }
 
 // 2. Study Section — Zen Minimalist Aesthetic
-function StudySection() {
+interface StudySectionProps {
+  onOpenQuote: () => void;
+}
+
+function StudySection({ onOpenQuote }: StudySectionProps) {
   return (
     <section
       id="estudos"
@@ -293,15 +367,25 @@ function StudySection() {
         >
           O aprendizado exige controle absoluto e disciplina imperdoável.
         </motion.p>
-        <Link href="/estudos">
+        <div className="flex gap-4 items-center">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-12 py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-full hover:bg-white/90 transition-all"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onOpenQuote}
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-white text-black cursor-pointer shadow-xl text-2xl"
           >
-            Abrir Cadernos
+            🇮🇹
           </motion.button>
-        </Link>
+          <Link href="/estudos">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-12 py-0 h-14 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center rounded-full hover:bg-white/90 transition-all"
+            >
+              Abrir Cadernos
+            </motion.button>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -452,9 +536,12 @@ function ConsumeSection({ addTask }: ConsumeSectionProps) {
 export function SectionsLayout() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [quoteIdx, setQuoteIdx] = useState<number | null>(null);
+  const [isQuoteOpen, setIsQuoteOpen] = useState(false);
 
-  // Load Tasks
+  // Load Tasks and Daily Quote Index
   useEffect(() => {
+    // 1. Task Loading
     const saved = localStorage.getItem('routine_tasks');
     let initialTasks = [];
     if (saved) {
@@ -466,13 +553,20 @@ export function SectionsLayout() {
         { id: '3', text: 'Read "Atomic Habits"', done: false },
       ];
     }
+    
+    // 2. Daily Quote Logic (Same index for the same day)
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    let seed = 0;
+    for (let i = 0; i < todayStr.length; i++) seed += todayStr.charCodeAt(i);
+    setQuoteIdx(seed % ITALIAN_EXPRESSIONS.length);
 
     // Auto-delete logic: Filter tasks older than 5 days
     const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
-    const now = Date.now();
+    const nowTime = Date.now();
     const filteredTasks = initialTasks.filter((t: Task) => {
       if (t.done && t.completedAt) {
-        return now - t.completedAt < FIVE_DAYS_MS;
+        return nowTime - t.completedAt < FIVE_DAYS_MS;
       }
       return true;
     });
@@ -517,10 +611,20 @@ export function SectionsLayout() {
   return (
     <>
       <RoutineSection tasks={tasks} toggleTask={toggleTask} deleteTask={deleteTask} />
-      <StudySection />
+      <StudySection onOpenQuote={() => setIsQuoteOpen(true)} />
       <FinanceSection />
       <ConsumeSection addTask={addTask} />
       <Footer />
+
+      <AnimatePresence>
+        {isQuoteOpen && quoteIdx !== null && (
+          <ItalianQuoteModal 
+            isOpen={true} 
+            onClose={() => setIsQuoteOpen(false)} 
+            quote={ITALIAN_EXPRESSIONS[quoteIdx]} 
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
