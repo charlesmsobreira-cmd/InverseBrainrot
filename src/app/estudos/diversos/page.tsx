@@ -10,7 +10,27 @@ import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
+import LinkExtension from '@tiptap/extension-link';
+import Typography from '@tiptap/extension-typography';
 import { supabase } from '@/lib/supabase';
+import { AnimatePresence } from 'framer-motion';
+
+// --- Custom Highlight Extension with ID ---
+const CustomHighlight = Highlight.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      id: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-highlight-id'),
+        renderHTML: attributes => {
+          if (!attributes.id) return {};
+          return { 'data-highlight-id': attributes.id };
+        },
+      },
+    };
+  },
+});
 
 type LinkType = {
   id: string;
@@ -65,16 +85,21 @@ export default function DiversosPage() {
   const [newLinkTitle, setNewLinkTitle] = useState('');
 
   const activePage = pages.find(p => p.id === activePageId);
+  const [hoveredHighlightId, setHoveredHighlightId] = useState<string | null>(null);
 
   // --- Tiptap Editor ---
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Highlight.configure({ multicolor: true }),
+      CustomHighlight.configure({ multicolor: true }),
       Placeholder.configure({
         placeholder: 'Comece a digitar seus pensamentos...',
       }),
       BubbleMenuExtension,
+      LinkExtension.configure({
+        openOnClick: false,
+      }),
+      Typography,
     ],
     content: '',
     onUpdate: ({ editor }) => {
@@ -82,8 +107,27 @@ export default function DiversosPage() {
       updateActivePageNotes(html);
     },
     editorProps: {
+      handleDOMEvents: {
+        mouseover: (view, event) => {
+          const pos = view.posAtCoords({ left: event.clientX, top: event.clientY });
+          if (pos) {
+            const marks = view.state.doc.resolve(pos.pos).marks();
+            const hlMark = marks.find(m => m.type.name === 'highlight');
+            if (hlMark && hlMark.attrs.id) {
+              setHoveredHighlightId(hlMark.attrs.id);
+            } else {
+              setHoveredHighlightId(null);
+            }
+          }
+          return false;
+        },
+        mouseleave: () => {
+          setHoveredHighlightId(null);
+          return false;
+        }
+      },
       attributes: {
-        class: 'prose prose-invert max-w-none focus:outline-none min-h-[500px] text-zinc-100 selection:bg-yellow-400/30 text-lg leading-relaxed font-sans',
+        class: 'prose prose-invert max-w-none focus:outline-none min-h-[500px] text-zinc-100 text-lg leading-relaxed font-sans',
       },
     },
   });
@@ -98,9 +142,16 @@ export default function DiversosPage() {
       height: 0;
     }
     .ProseMirror mark {
-      background-color: #fbbf2433;
-      border-radius: 2px;
-      padding: 0 2px;
+      background-color: #fbbf2415;
+      border-radius: 4px;
+      padding: 2px 0;
+      transition: all 0.2s ease;
+      cursor: crosshair;
+      border-bottom: 2px solid transparent;
+    }
+    .ProseMirror mark:hover {
+      background-color: #fbbf2430;
+      border-bottom-color: #fbbf2450;
     }
   `;
 
@@ -192,15 +243,16 @@ export default function DiversosPage() {
     const { from, to } = editor.state.selection;
     const selectedText = editor.state.doc.textBetween(from, to, ' ');
 
+    const highlightId = Date.now().toString();
     const newHighlight: HighlightType = {
-      id: Date.now().toString(),
+      id: highlightId,
       text: selectedText,
       note: annotationNote,
       color: '#fbbf24', // yellow-400
       createdAt: new Date().toISOString()
     };
 
-    editor.chain().focus().setHighlight({ color: '#fbbf2433' }).run();
+    editor.chain().focus().setHighlight({ id: highlightId } as any).run();
 
     const updatedHighlights = [...(activePage?.highlights || []), newHighlight];
     setPages(prev => prev.map(p => p.id === activePageId ? { ...p, highlights: updatedHighlights } : p));
@@ -322,7 +374,33 @@ export default function DiversosPage() {
           ) : activePage ? (
 
             <>
-            <div className="flex-1 overflow-y-auto no-scrollbar relative">
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left Gutter for Annotations */}
+              <div className="w-64 flex-shrink-0 border-r border-white/5 relative p-8">
+                <AnimatePresence>
+                  {hoveredHighlightId && activePage.highlights.find(h => h.id === hoveredHighlightId) && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="sticky top-12"
+                    >
+                      <div className="flex items-center gap-2 mb-4 text-zinc-500">
+                        <NotePencil size={16} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Anotação</span>
+                      </div>
+                      <p className="text-zinc-100 text-sm font-medium leading-relaxed italic border-l-2 border-yellow-500/50 pl-4 py-1">
+                        {activePage.highlights.find(h => h.id === hoveredHighlightId)?.note}
+                      </p>
+                      <span className="block mt-4 text-[8px] font-mono text-zinc-600 uppercase tracking-tighter">
+                        {new Date(activePage.highlights.find(h => h.id === hoveredHighlightId)?.createdAt || '').toLocaleDateString()}
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="flex-1 overflow-y-auto no-scrollbar relative">
               {editor && (
                 <BubbleMenu editor={editor} className="bg-zinc-900 border border-white/10 shadow-2xl rounded-xl overflow-hidden flex items-center p-1 min-w-[150px] z-50">
                   {isAddingAnnotation ? (
@@ -363,12 +441,6 @@ export default function DiversosPage() {
                     className="text-6xl font-black tracking-tighter bg-transparent outline-none w-full placeholder:text-zinc-800 transition-colors duration-1000 text-white leading-none"
                     placeholder="Página Sem Título"
                   />
-                  <div className="flex items-center gap-4 mt-6">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 font-mono">Página Viva</span>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="min-h-[60vh]">
@@ -376,7 +448,8 @@ export default function DiversosPage() {
                 </div>
               </div>
             </div>
-            </>
+          </div>
+          </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
               <motion.div 
@@ -492,40 +565,7 @@ export default function DiversosPage() {
                           </div>
                         </div>
 
-                        {/* ── ANOTAÇÕES FLUTUANTES ── */}
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Anotações Flutuantes</span>
-                          </div>
-                          
-                          <div className="space-y-3">
-                            {page.highlights.length === 0 ? (
-                               <div className="text-center py-4 bg-white/[0.02] rounded-xl border border-white/5 border-dashed">
-                                 <p className="text-[10px] font-bold text-zinc-700">NENHUMA ANOTAÇÃO</p>
-                               </div>
-                            ) : (
-                               page.highlights.map(hl => (
-                                 <motion.div 
-                                   initial={{ opacity: 0, x: 20 }}
-                                   animate={{ opacity: 1, x: 0 }}
-                                   key={hl.id} 
-                                   className="relative group bg-zinc-900/50 border-l-2 border-yellow-500/50 p-3 rounded-r-xl"
-                                 >
-                                    <div className="flex justify-between items-start gap-2 mb-2">
-                                      <p className="text-[10px] font-black uppercase italic text-zinc-500 truncate max-w-[150px]">"{hl.text}"</p>
-                                      <button onClick={() => deleteHighlight(hl.id)} className="opacity-0 group-hover:opacity-100 text-zinc-700 hover:text-white transition-colors">
-                                        <Trash size={12} />
-                                      </button>
-                                    </div>
-                                    <p className="text-xs text-zinc-300 leading-relaxed font-medium">{hl.note}</p>
-                                    <span className="text-[8px] font-mono text-zinc-700 uppercase mt-2 block">{new Date(hl.createdAt).toLocaleDateString()}</span>
-                                 </motion.div>
-                               ))
-                            )}
-                          </div>
-                        </div>
-
-                        {/* ── LINKS SALVOS ── */}
+                        {/* ── ARQUIVOS E ANEXOS ── */}
                         <div>
                           <div className="flex items-center justify-between mb-3">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Links Inseridos</span>
