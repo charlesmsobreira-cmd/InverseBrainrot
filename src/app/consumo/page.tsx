@@ -197,7 +197,11 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       onNotify('Imagem carregada com sucesso!');
     } catch (error: any) {
       console.error('Upload error:', error);
-      onNotify('Erro ao carregar imagem!', 'error');
+      // Melhora a mensagem de erro para o usuário
+      const msg = error.message?.includes('bucket not found') || error.status === 404
+        ? 'Erro: O bucket "mural" não existe no Supabase!' 
+        : 'Erro ao carregar imagem no Storage!';
+      onNotify(msg, 'error');
     } finally {
       setIsUploading(false);
     }
