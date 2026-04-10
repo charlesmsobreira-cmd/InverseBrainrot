@@ -52,6 +52,7 @@ type AttachmentType = {
   url: string;
   type: string; // 'image' | 'pdf' | 'other'
   size: number;
+  path: string;
 };
 
 type PageType = {
@@ -143,6 +144,7 @@ export default function DiversosPage() {
     }
     .ProseMirror mark {
       background-color: #fbbf2415;
+      color: inherit;
       border-radius: 4px;
       padding: 2px 0;
       transition: all 0.2s ease;
@@ -151,6 +153,7 @@ export default function DiversosPage() {
     }
     .ProseMirror mark:hover {
       background-color: #fbbf2430;
+      color: #fff;
       border-bottom-color: #fbbf2450;
     }
   `;
@@ -299,13 +302,26 @@ export default function DiversosPage() {
       name: file.name,
       url: publicUrl,
       type: file.type.startsWith('image') ? 'image' : file.type === 'application/pdf' ? 'pdf' : 'other',
-      size: file.size
+      size: file.size,
+      path: fileName
     };
 
     const updatedAttachments = [...(activePage?.attachments || []), newAttachment];
     setPages(prev => prev.map(p => p.id === activePageId ? { ...p, attachments: updatedAttachments } : p));
     persistPage({ ...activePage!, attachments: updatedAttachments });
     setIsUploading(false);
+  };
+
+  const deleteAttachment = async (attachment: AttachmentType) => {
+    if (!activePageId) return;
+    
+    // 1. Remove from storage
+    await supabase.storage.from('attachments').remove([attachment.path]);
+
+    // 2. Remove from database
+    const updatedAttachments = activePage!.attachments.filter(a => a.id !== attachment.id);
+    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, attachments: updatedAttachments } : p));
+    persistPage({ ...activePage!, attachments: updatedAttachments });
   };
 
   const deletePage = async (id: string, e: React.MouseEvent) => {
@@ -556,9 +572,14 @@ export default function DiversosPage() {
                                       <p className="text-[11px] font-bold text-zinc-200 truncate">{att.name}</p>
                                       <p className="text-[9px] text-zinc-600 uppercase font-mono">{(att.size / 1024).toFixed(0)} KB • {att.type}</p>
                                     </div>
-                                    <button onClick={() => window.open(att.url, '_blank')} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/5 rounded-lg transition-all">
-                                       <LinkIcon size={12} className="text-zinc-400" />
-                                    </button>
+                                    <div className="flex items-center gap-1 group/actions">
+                                      <button onClick={() => window.open(att.url, '_blank')} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/5 rounded-lg transition-all">
+                                         <LinkIcon size={12} className="text-zinc-400" />
+                                      </button>
+                                      <button onClick={() => deleteAttachment(att)} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-all text-red-400">
+                                         <Trash size={12} />
+                                      </button>
+                                    </div>
                                  </div>
                                ))
                             )}
