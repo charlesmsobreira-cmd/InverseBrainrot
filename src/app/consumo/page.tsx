@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, Star, StarHalf, Heart, CheckCircle, WarningCircle, ListBullets, Trash } from '@phosphor-icons/react';
+import { ArrowLeft, X, Star, StarHalf, Heart, CheckCircle, WarningCircle, ListBullets, Trash, PlusCircle } from '@phosphor-icons/react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -151,13 +151,56 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewKey, setPreviewKey] = useState(0);
 
   const getPreviewUrl = () => {
     if (!imageUrl) return '';
-    if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) return imageUrl;
-    // Auto-append .png if not already present
+    // Se for URL externa ou absoluta, retorna direto
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('blob:')) return imageUrl;
+    
+    // Se for um link do Supabase Storage
+    if (imageUrl.includes('supabase.co')) {
+      return `${imageUrl}?t=${previewKey}`;
+    }
+
+    // Fallback para o sistema legado de arquivos locais
     const filename = imageUrl.endsWith('.png') ? imageUrl : `${imageUrl}.png`;
-    return `/logs/${filename}`;
+    return `/logs/${filename}?t=${previewKey}`;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // 1. Gerar nome único
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `covers/${fileName}`;
+
+      // 2. Upload para o Supabase (Bucket 'mural')
+      const { data, error } = await supabase.storage
+        .from('mural')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      // 3. Pegar URL Pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('mural')
+        .getPublicUrl(filePath);
+
+      setImageUrl(publicUrl);
+      setPreviewKey(prev => prev + 1);
+      onNotify('Imagem carregada com sucesso!');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      onNotify('Erro ao carregar imagem!', 'error');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -167,7 +210,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
     }
 
     if (category !== 'Filmes' && !imageUrl) {
-      onNotify('Nome da imagem é obrigatório!', 'error');
+      onNotify('Imagem é obrigatória!', 'error');
       return;
     }
 
@@ -182,12 +225,11 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       : `Na wishlist.`;
 
     const newLog = {
-      id: Date.now().toString(),
       title: name,
       description: descriptionText,
       subtitle: extra,
       date: date,
-      image_url: getPreviewUrl(),
+      image_url: imageUrl, // Salva o link direto (seja local ou Supabase)
       category: internalCategory,
       rating: Math.round(rating),
       is_liked: isLiked
@@ -207,6 +249,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
     onRefresh();
     onClose();
     onNotify('Log registrado com sucesso!');
+    // Reset state
     setName(''); setExtra(''); setReview(''); setImageUrl(''); setRating(0); setIsLiked(false);
   };
 
@@ -217,7 +260,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
       <motion.div 
         initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative w-full max-w-xl bg-[#121212] border border-white/10 rounded-2xl shadow-2xl p-8 text-white overflow-hidden"
+        className="relative w-full max-w-xl bg-[#121212] border border-white/10 rounded-2xl shadow-2xl p-8 text-white overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
       >
         <div className="flex justify-between items-start mb-8">
           <div className="flex flex-col">
@@ -255,24 +298,9 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
                        const isHalf = !isFull && display >= half;
                        return (
                          <div key={s} className="relative w-5 h-5 cursor-pointer">
-                           {/* Left half = 0.5 */}
-                           <div
-                             className="absolute left-0 top-0 w-1/2 h-full z-10"
-                             onMouseEnter={() => setHoverRating(half)}
-                             onMouseLeave={() => setHoverRating(0)}
-                             onClick={() => setRating(rating === half ? 0 : half)}
-                           />
-                           {/* Right half = full */}
-                           <div
-                             className="absolute right-0 top-0 w-1/2 h-full z-10"
-                             onMouseEnter={() => setHoverRating(s)}
-                             onMouseLeave={() => setHoverRating(0)}
-                             onClick={() => setRating(rating === s ? 0 : s)}
-                           />
-                           {/* Icon */}
-                           {isFull  ? <Star     size={20} weight="fill" className="text-azure-500" /> :
-                            isHalf  ? <StarHalf size={20} weight="fill" className="text-azure-500" /> :
-                                      <Star     size={20} weight="bold"  className="opacity-20" />}
+                           <div className="absolute left-0 top-0 w-1/2 h-full z-10" onMouseEnter={() => setHoverRating(half)} onMouseLeave={() => setHoverRating(0)} onClick={() => setRating(rating === half ? 0 : half)} />
+                           <div className="absolute right-0 top-0 w-1/2 h-full z-10" onMouseEnter={() => setHoverRating(s)} onMouseLeave={() => setHoverRating(0)} onClick={() => setRating(rating === s ? 0 : s)} />
+                           {isFull  ? <Star size={20} weight="fill" className="text-azure-500" /> : isHalf  ? <StarHalf size={20} weight="fill" className="text-azure-500" /> : <Star size={20} weight="bold"  className="opacity-20" />}
                          </div>
                        );
                      })}
@@ -286,27 +314,67 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
 
               <div className="space-y-2">
                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Sua Resenha</label>
-                 <textarea value={review} onChange={(e) => setReview(e.target.value)} placeholder="" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 h-32 resize-none transition-all text-sm" />
+                 <textarea value={review} onChange={(e) => setReview(e.target.value)} placeholder="" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 h-24 resize-none transition-all text-sm" />
               </div>
 
               <div className="space-y-4">
-                 <div className="space-y-2">
-                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Nome do Arquivo (PNG em /public/logs/)</label>
-                   <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Ex: madona.png" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 transition-all text-[10px] font-mono" />
+                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Capa do Registro</label>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Opção 1: Upload (Novo) */}
+                    <div className="relative group">
+                       <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                       <div className={`w-full h-32 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${isUploading ? 'bg-white/5 border-white/10' : 'border-white/10 group-hover:bg-white/5 group-hover:border-white/30'}`}>
+                          {isUploading ? (
+                             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-2 border-azure-500 border-t-transparent rounded-full" />
+                          ) : (
+                             <>
+                                <PlusCircle size={32} className="text-white/20 group-hover:text-azure-500 transition-colors" />
+                                <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Upload Imagem</span>
+                             </>
+                          )}
+                       </div>
+                    </div>
+
+                    {/* Opção 2: Manual (Legado) */}
+                    <div className="flex flex-col justify-center gap-2">
+                       <input 
+                         type="text" 
+                         value={imageUrl.startsWith('http') ? '' : imageUrl} 
+                         onChange={(e) => setImageUrl(e.target.value)} 
+                         placeholder="Caminho local (ex: madona)" 
+                         className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-azure-500 transition-all text-[10px] font-mono" 
+                       />
+                       <span className="text-[8px] font-mono italic opacity-30 px-2 leading-tight">Use o upload ou digite o nome do arquivo da pasta logs.</span>
+                    </div>
                  </div>
+
                  {imageUrl && (
-                   <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                     <img src={getPreviewUrl()} alt="Preview" className="w-16 h-16 rounded-lg object-cover bg-black/40" onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/121212/white?text=Erro'; }} />
-                     <p className="text-[10px] font-mono text-azure-400 truncate">{getPreviewUrl()}</p>
-                   </div>
+                    <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 flex-shrink-0">
+                         <img 
+                           key={previewKey}
+                           src={getPreviewUrl()} 
+                           alt="Preview" 
+                           className="w-full h-full object-cover" 
+                           onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { 
+                             (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/121212/white?text=Erro';
+                           }} 
+                         />
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="text-[8px] font-bold uppercase tracking-widest text-azure-500 mb-1">Preview Ativo</span>
+                        <p className="text-[10px] font-mono text-white/40 truncate italic">{getPreviewUrl()}</p>
+                      </div>
+                    </div>
                  )}
               </div>
             </>
           )}
 
-          <div className="flex gap-4 pt-4">
-            <button onClick={onClose} className="flex-1 py-4 rounded-xl font-bold uppercase tracking-widest text-xs bg-white/5 hover:bg-white/10 transition-all">Cancelar</button>
-            <button onClick={handleSave} className="flex-[2] py-4 rounded-xl font-bold uppercase tracking-widest text-xs bg-azure-500 hover:bg-azure-600 transition-all shadow-lg shadow-azure-500/20">Criar Registro</button>
+          <div className="flex gap-4 pt-4 sticky bottom-0 bg-[#121212] py-2">
+            <button onClick={onClose} className="flex-1 py-4 rounded-xl font-bold uppercase tracking-widest text-xs bg-white/5 hover:bg-white/10 transition-all focus:outline-none">Cancelar</button>
+            <button onClick={handleSave} disabled={isUploading} className={`flex-[2] py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-lg focus:outline-none ${isUploading ? 'bg-white/5 text-white/20' : 'bg-azure-500 hover:bg-azure-600 shadow-azure-500/20'}`}>Criar Registro</button>
           </div>
         </div>
       </motion.div>
