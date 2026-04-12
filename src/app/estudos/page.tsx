@@ -35,7 +35,7 @@ export default function StudyPage() {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           whileHover={{ flex: 1.3 }}
-          className="relative flex-1 group cursor-pointer border-r border-white/5 overflow-hidden transition-all duration-700"
+          className="relative flex-1 group cursor-pointer border-r border-white/5 overflow-hidden"
         >
           {/* Subtle bg glow */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -78,7 +78,7 @@ export default function StudyPage() {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           whileHover={{ flex: 1.3 }}
-          className="relative flex-1 group cursor-pointer overflow-hidden transition-all duration-700"
+          className="relative flex-1 group cursor-pointer overflow-hidden"
         >
           {/* Subtle bg glow */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
