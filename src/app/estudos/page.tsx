@@ -76,7 +76,12 @@ export default function StudyPage() {
           onClick={() => router.push('/estudos/flashcards')}
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          transition={{ 
+            duration: 1.2, 
+            ease: [0.16, 1, 0.3, 1],
+            x: { delay: 0.1, duration: 1.2 },
+            opacity: { delay: 0.1, duration: 1.2 }
+          }}
           whileHover={{ flex: 1.3 }}
           className="relative flex-1 group cursor-pointer overflow-hidden"
         >
