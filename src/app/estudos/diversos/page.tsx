@@ -116,26 +116,39 @@ export default function DiversosPage() {
       updateActivePageNotes(html);
     },
     editorProps: {
-      handleDOMEvents: {
-        mouseover: (view, event) => {
-          const pos = view.posAtCoords({ left: event.clientX, top: event.clientY });
-          if (pos) {
-            const marks = view.state.doc.resolve(pos.pos).marks();
-            const hlMark = marks.find(m => m.type.name === 'highlight');
-            if (hlMark && hlMark.attrs.id) {
-              setHoveredHighlightId(hlMark.attrs.id);
-            } else {
-              setHoveredHighlightId(null);
+      handleClick: (view, pos) => {
+        const { doc } = view.state;
+        const marks = doc.resolve(pos).marks();
+        const hlMark = marks.find(m => m.type.name === 'highlight');
+        if (hlMark && hlMark.attrs.id) {
+          setHoveredHighlightId(hlMark.attrs.id);
+          return true;
+        }
+        setHoveredHighlightId(null);
+        return false;
+      },
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            uploadAndInsertImage(file);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view, event) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) {
+              uploadAndInsertImage(file);
+              return true;
             }
           }
-          return false;
-        },
-        mouseleave: () => {
-          if (!isGutterHovered) {
-             setHoveredHighlightId(null);
-          }
-          return false;
         }
+        return false;
       },
       attributes: {
         class: 'prose prose-invert max-w-none focus:outline-none min-h-[500px] text-zinc-100 text-lg leading-relaxed font-sans',
@@ -159,7 +172,7 @@ export default function DiversosPage() {
       border-radius: 4px;
       padding: 2px 0;
       transition: all 0.2s ease;
-      cursor: crosshair;
+      cursor: pointer;
       border-bottom: 2px solid transparent;
     }
     .ProseMirror mark:hover {
@@ -372,18 +385,17 @@ export default function DiversosPage() {
     setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: updatedLinks } : p));
   };
  
-  const insertInlineImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !editor) return;
+  const uploadAndInsertImage = async (file: File) => {
+    if (!editor) return;
 
     setIsUploading(true);
     const fileName = `${Date.now()}-inline-${file.name}`;
-    const { data, error } = await supabase.storage
+    const { data: uploadData, error } = await supabase.storage
       .from('attachments')
       .upload(fileName, file);
 
     if (error) {
-      console.error('Error uploading inline image:', error);
+      console.error('Error uploading image:', error);
       setIsUploading(false);
       return;
     }
@@ -394,6 +406,12 @@ export default function DiversosPage() {
 
     editor.chain().focus().setImage({ src: publicUrl, alt: file.name }).run();
     setIsUploading(false);
+  };
+
+  const insertInlineImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploadAndInsertImage(file);
   };
 
   return (
@@ -494,18 +512,14 @@ export default function DiversosPage() {
                     </div>
                   ) : (
                     <>
-                      <button 
-                        onClick={() => setIsAddingAnnotation(true)}
-                        className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors border-r border-white/5"
-                      >
-                        <NotePencil size={14} /> Anotar
-                      </button>
-                      <label className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer">
-                        <ImageSquare size={14} /> Imagem
-                        <input type="file" className="hidden" accept="image/*" onChange={insertInlineImage} disabled={isUploading} />
-                      </label>
-                    </>
-                  )}
+                    <button 
+                      onClick={() => setIsAddingAnnotation(true)}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                    >
+                      <NotePencil size={14} /> Anotar
+                    </button>
+                  </>
+                )}
                 </BubbleMenu>
               )}
 
