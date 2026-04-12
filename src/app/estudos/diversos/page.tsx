@@ -7,45 +7,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
-import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
-import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
-import LinkExtension from '@tiptap/extension-link';
-import Typography from '@tiptap/extension-typography';
 import { supabase } from '@/lib/supabase';
 import { AnimatePresence } from 'framer-motion';
 import ImageExtension from '@tiptap/extension-image';
 import { ImageSquare } from '@phosphor-icons/react';
 
-// --- Custom Highlight Extension with ID ---
-const CustomHighlight = Highlight.extend({
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      id: {
-        default: null,
-        parseHTML: element => element.getAttribute('data-highlight-id'),
-        renderHTML: attributes => {
-          if (!attributes.id) return {};
-          return { 'data-highlight-id': attributes.id };
-        },
-      },
-    };
-  },
-});
-
 type LinkType = {
   id: string;
   url: string;
   title: string;
-};
-
-type HighlightType = {
-  id: string;
-  text: string;
-  note: string;
-  color: string;
-  createdAt: string;
 };
 
 type AttachmentType = {
@@ -62,7 +33,6 @@ type PageType = {
   title: string;
   notes: string; // This will now store HTML
   links: LinkType[];
-  highlights: HighlightType[];
   attachments: AttachmentType[];
 };
 
@@ -71,7 +41,6 @@ const defaultPage: PageType = {
   title: 'Minhas Anotações Iniciais',
   notes: '',
   links: [],
-  highlights: [],
   attachments: []
 };
 
@@ -81,7 +50,6 @@ export default function DiversosPage() {
   const [pages, setPages] = useState<PageType[]>([]);
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGutterHovered, setIsGutterHovered] = useState(false);
 
   // Link addition form state
   const [isAddingLink, setIsAddingLink] = useState(false);
@@ -89,13 +57,11 @@ export default function DiversosPage() {
   const [newLinkTitle, setNewLinkTitle] = useState('');
 
   const activePage = pages.find(p => p.id === activePageId);
-  const [hoveredHighlightId, setHoveredHighlightId] = useState<string | null>(null);
 
   // --- Tiptap Editor ---
   const editor = useEditor({
     extensions: [
       StarterKit,
-      CustomHighlight.configure({ multicolor: true }),
       Placeholder.configure({
         placeholder: 'Comece a digitar seus pensamentos...',
       }),
@@ -106,7 +72,7 @@ export default function DiversosPage() {
       Typography,
       ImageExtension.configure({
         HTMLAttributes: {
-          class: 'rounded-2xl shadow-2xl max-w-full my-8 mx-auto border border-white/10',
+          class: 'rounded-2xl shadow-2xl max-w-full h-auto my-8 mx-auto block border border-white/10',
         },
       }),
     ],
@@ -116,17 +82,6 @@ export default function DiversosPage() {
       updateActivePageNotes(html);
     },
     editorProps: {
-      handleClick: (view, pos) => {
-        const { doc } = view.state;
-        const marks = doc.resolve(pos).marks();
-        const hlMark = marks.find(m => m.type.name === 'highlight');
-        if (hlMark && hlMark.attrs.id) {
-          setHoveredHighlightId(hlMark.attrs.id);
-          return true;
-        }
-        setHoveredHighlightId(null);
-        return false;
-      },
       handleDrop: (view, event, slice, moved) => {
         if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
           const file = event.dataTransfer.files[0];
@@ -166,20 +121,6 @@ export default function DiversosPage() {
       pointer-events: none;
       height: 0;
     }
-    .ProseMirror mark {
-      background-color: #fbbf2450;
-      color: inherit;
-      border-radius: 4px;
-      padding: 2px 0;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-    }
-    .ProseMirror mark:hover {
-      background-color: #fbbf2470;
-      color: #fff;
-      border-bottom-color: #fbbf24;
-    }
     .ProseMirror img {
       transition: transform 0.3s ease;
     }
@@ -204,7 +145,6 @@ export default function DiversosPage() {
         setPages(data.map(p => ({ 
           ...p, 
           links: p.links || [],
-          highlights: p.highlights || [],
           attachments: p.attachments || []
         })));
       }
@@ -222,7 +162,6 @@ export default function DiversosPage() {
         title: updatedPage.title,
         notes: updatedPage.notes,
         links: updatedPage.links,
-        highlights: updatedPage.highlights,
         attachments: updatedPage.attachments,
         updated_at: new Date().toISOString()
       }).eq('id', updatedPage.id);
@@ -255,7 +194,6 @@ export default function DiversosPage() {
       title: '',
       notes: '',
       links: [],
-      highlights: [],
       attachments: []
     };
     const { error } = await supabase.from('notepad_pages').insert([newPage]);
@@ -264,44 +202,6 @@ export default function DiversosPage() {
       setActivePageId(newPage.id);
       setIsAddingLink(false);
     }
-  };
-
-  // --- Highlighting Logic ---
-  const [annotationNote, setAnnotationNote] = useState('');
-  const [isAddingAnnotation, setIsAddingAnnotation] = useState(false);
-
-  const addHighlight = () => {
-    if (!editor || !activePageId || !annotationNote) return;
-    
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to, ' ');
-
-    const highlightId = Date.now().toString();
-    const newHighlight: HighlightType = {
-      id: highlightId,
-      text: selectedText,
-      note: annotationNote,
-      color: '#fbbf24', // yellow-400
-      createdAt: new Date().toISOString()
-    };
-
-    editor.chain().focus().setHighlight({ id: highlightId } as any).run();
-
-    const updatedHighlights = [...(activePage?.highlights || []), newHighlight];
-    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, highlights: updatedHighlights } : p));
-    
-    const page = { ...activePage!, highlights: updatedHighlights };
-    persistPage(page);
-    
-    setIsAddingAnnotation(false);
-    setAnnotationNote('');
-  };
-
-  const deleteHighlight = (id: string) => {
-    if (!activePageId) return;
-    const updatedHighlights = activePage!.highlights.filter(h => h.id !== id);
-    setPages(prev => prev.map(p => p.id === activePageId ? { ...p, highlights: updatedHighlights } : p));
-    persistPage({ ...activePage!, highlights: updatedHighlights });
   };
 
   // --- File Upload Logic ---
@@ -451,79 +351,24 @@ export default function DiversosPage() {
 
             <>
             <div className="flex-1 flex overflow-hidden">
-              {/* Left Gutter for Annotations */}
-              <div 
-                className="w-48 lg:w-56 flex-shrink-0 border-r border-white/5 relative p-6 bg-black/10"
-                onMouseEnter={() => setIsGutterHovered(true)}
-                onMouseLeave={() => {
-                  setIsGutterHovered(false);
-                  setHoveredHighlightId(null);
-                }}
-              >
-                <AnimatePresence>
-                  {hoveredHighlightId && activePage.highlights.find(h => h.id === hoveredHighlightId) && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="sticky top-12"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2 text-zinc-500">
-                          <NotePencil size={16} />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Anotação</span>
-                        </div>
-                        <button 
-                          onClick={() => deleteHighlight(hoveredHighlightId)}
-                          className="p-1.5 hover:bg-red-500/10 text-red-400/50 hover:text-red-400 rounded-lg transition-all"
-                          title="Remover anotação"
-                        >
-                          <Trash size={14} />
-                        </button>
-                      </div>
-                      <p className="text-zinc-100 text-sm font-medium leading-relaxed italic border-l-2 border-yellow-500/50 pl-4 py-1 break-words">
-                        {activePage.highlights.find(h => h.id === hoveredHighlightId)?.note}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="flex-1 overflow-y-auto no-scrollbar relative">
+              <div className="flex-1 overflow-y-auto no-scrollbar relative w-full px-4 lg:px-12">
               {editor && (
-                <BubbleMenu editor={editor} className="bg-zinc-900 border border-white/10 shadow-2xl rounded-xl overflow-hidden flex items-center p-1 min-w-[150px] z-50">
-                  {isAddingAnnotation ? (
-                    <div className="flex items-center p-1 gap-1">
-                      <input 
-                        type="text" 
-                        placeholder="Escreva sua anotação..." 
-                        className="bg-transparent border-none outline-none text-xs px-3 py-2 w-48 text-zinc-100 placeholder:text-zinc-500"
-                        value={annotationNote}
-                        onChange={e => setAnnotationNote(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && addHighlight()}
-                        autoFocus
-                      />
-                      <button onClick={addHighlight} className="p-2 hover:bg-white/5 text-emerald-400 transition-colors">
-                        <Plus size={16} weight="bold" />
-                      </button>
-                      <button onClick={() => setIsAddingAnnotation(false)} className="p-2 hover:bg-white/5 text-red-400 transition-colors">
-                        <X size={16} weight="bold" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                    <button 
-                      onClick={() => setIsAddingAnnotation(true)}
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors"
-                    >
-                      <NotePencil size={14} /> Anotar
-                    </button>
-                  </>
-                )}
+                <BubbleMenu 
+                  editor={editor} 
+                  shouldShow={({ editor }) => editor.isActive('image')}
+                  className="bg-zinc-900 border border-white/10 shadow-2xl rounded-xl overflow-hidden flex items-center p-1 z-50"
+                  tippyOptions={{ duration: 100 }}
+                >
+                  <button 
+                    onClick={() => editor.chain().focus().deleteSelection().run()}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-red-500/10 text-red-400 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                  >
+                    <Trash size={14} /> Remover Imagem
+                  </button>
                 </BubbleMenu>
               )}
 
-              <div className="max-w-4xl mx-auto px-6 md:px-12 py-12">
+              <div className="max-w-4xl mx-auto py-12">
                 <div className="mb-12">
                   <input 
                     type="text" 
