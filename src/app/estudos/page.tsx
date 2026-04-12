@@ -33,8 +33,12 @@ export default function StudyPage() {
           onClick={() => router.push('/estudos/diversos')}
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{ flex: 1.3 }}
+          transition={{ 
+            duration: 1.2, 
+            ease: [0.16, 1, 0.3, 1],
+            flex: { duration: 1.5, ease: [0.16, 1, 0.3, 1] }
+          }}
+          whileHover={{ flex: 1.5 }}
           className="relative flex-1 group cursor-pointer border-r border-white/5 overflow-hidden"
         >
           {/* Subtle bg glow */}
@@ -80,9 +84,10 @@ export default function StudyPage() {
             duration: 1.2, 
             ease: [0.16, 1, 0.3, 1],
             x: { delay: 0.1, duration: 1.2 },
-            opacity: { delay: 0.1, duration: 1.2 }
+            opacity: { delay: 0.1, duration: 1.2 },
+            flex: { duration: 1.5, ease: [0.16, 1, 0.3, 1] }
           }}
-          whileHover={{ flex: 1.3 }}
+          whileHover={{ flex: 1.5 }}
           className="relative flex-1 group cursor-pointer overflow-hidden"
         >
           {/* Subtle bg glow */}
