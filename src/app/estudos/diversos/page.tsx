@@ -493,16 +493,18 @@ export default function DiversosPage() {
                       </button>
                     </div>
                   ) : (
-                    <button 
-                      onClick={() => setIsAddingAnnotation(true)}
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors border-r border-white/5"
-                    >
-                      <NotePencil size={14} /> Anotar
-                    </button>
-                    <label className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer">
-                      <ImageSquare size={14} /> Imagem
-                      <input type="file" className="hidden" accept="image/*" onChange={insertInlineImage} disabled={isUploading} />
-                    </label>
+                    <>
+                      <button 
+                        onClick={() => setIsAddingAnnotation(true)}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors border-r border-white/5"
+                      >
+                        <NotePencil size={14} /> Anotar
+                      </button>
+                      <label className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer">
+                        <ImageSquare size={14} /> Imagem
+                        <input type="file" className="hidden" accept="image/*" onChange={insertInlineImage} disabled={isUploading} />
+                      </label>
+                    </>
                   )}
                 </BubbleMenu>
               )}
