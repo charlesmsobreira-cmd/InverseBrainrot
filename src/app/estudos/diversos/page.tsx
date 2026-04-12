@@ -9,9 +9,11 @@ import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { supabase } from '@/lib/supabase';
-import { AnimatePresence } from 'framer-motion';
 import ImageExtension from '@tiptap/extension-image';
 import { ImageSquare } from '@phosphor-icons/react';
+import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
+import LinkExtension from '@tiptap/extension-link';
+import Typography from '@tiptap/extension-typography';
 
 type LinkType = {
   id: string;
@@ -357,7 +359,6 @@ export default function DiversosPage() {
                   editor={editor} 
                   shouldShow={({ editor }) => editor.isActive('image')}
                   className="bg-zinc-900 border border-white/10 shadow-2xl rounded-xl overflow-hidden flex items-center p-1 z-50"
-                  tippyOptions={{ duration: 100 }}
                 >
                   <button 
                     onClick={() => editor.chain().focus().deleteSelection().run()}
