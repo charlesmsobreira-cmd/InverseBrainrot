@@ -214,13 +214,17 @@ export default function DiversosPage() {
     if (!file || !activePageId) return;
 
     setIsUploading(true);
-    const fileName = `${Date.now()}-${file.name}`;
+    // Remove caracteres especiais e espaços do nome do arquivo
+    const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9.\-]/g, '_');
+    const fileName = `${Date.now()}-${safeName}`;
+    
     const { data, error } = await supabase.storage
       .from('attachments')
       .upload(fileName, file);
 
     if (error) {
       console.error('Error uploading:', error);
+      alert(`Erro ao fazer upload: ${error.message || 'Verifique o formato ou tente novamente.'}`);
       setIsUploading(false);
       return;
     }
@@ -291,13 +295,15 @@ export default function DiversosPage() {
     if (!editor) return;
 
     setIsUploading(true);
-    const fileName = `${Date.now()}-inline-${file.name}`;
+    const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9.\-]/g, '_');
+    const fileName = `${Date.now()}-inline-${safeName}`;
     const { data: uploadData, error } = await supabase.storage
       .from('attachments')
       .upload(fileName, file);
 
     if (error) {
       console.error('Error uploading image:', error);
+      alert(`Erro ao fazer upload da imagem: ${error.message || 'Tente novamente.'}`);
       setIsUploading(false);
       return;
     }
