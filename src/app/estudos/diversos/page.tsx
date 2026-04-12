@@ -14,6 +14,8 @@ import LinkExtension from '@tiptap/extension-link';
 import Typography from '@tiptap/extension-typography';
 import { supabase } from '@/lib/supabase';
 import { AnimatePresence } from 'framer-motion';
+import ImageExtension from '@tiptap/extension-image';
+import { ImageSquare } from '@phosphor-icons/react';
 
 // --- Custom Highlight Extension with ID ---
 const CustomHighlight = Highlight.extend({
@@ -79,6 +81,7 @@ export default function DiversosPage() {
   const [pages, setPages] = useState<PageType[]>([]);
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGutterHovered, setIsGutterHovered] = useState(false);
 
   // Link addition form state
   const [isAddingLink, setIsAddingLink] = useState(false);
@@ -101,6 +104,11 @@ export default function DiversosPage() {
         openOnClick: false,
       }),
       Typography,
+      ImageExtension.configure({
+        HTMLAttributes: {
+          class: 'rounded-2xl shadow-2xl max-w-full my-8 mx-auto border border-white/10',
+        },
+      }),
     ],
     content: '',
     onUpdate: ({ editor }) => {
@@ -123,7 +131,9 @@ export default function DiversosPage() {
           return false;
         },
         mouseleave: () => {
-          setHoveredHighlightId(null);
+          if (!isGutterHovered) {
+             setHoveredHighlightId(null);
+          }
           return false;
         }
       },
@@ -144,7 +154,7 @@ export default function DiversosPage() {
       height: 0;
     }
     .ProseMirror mark {
-      background-color: #fbbf2415;
+      background-color: #fbbf2450;
       color: inherit;
       border-radius: 4px;
       padding: 2px 0;
@@ -153,9 +163,15 @@ export default function DiversosPage() {
       border-bottom: 2px solid transparent;
     }
     .ProseMirror mark:hover {
-      background-color: #fbbf2430;
+      background-color: #fbbf2470;
       color: #fff;
-      border-bottom-color: #fbbf2450;
+      border-bottom-color: #fbbf24;
+    }
+    .ProseMirror img {
+      transition: transform 0.3s ease;
+    }
+    .ProseMirror img:hover {
+      transform: scale(1.02);
     }
   `;
 
@@ -355,6 +371,31 @@ export default function DiversosPage() {
     await supabase.from('notepad_pages').update({ links: updatedLinks, updated_at: new Date().toISOString() }).eq('id', activePageId);
     setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: updatedLinks } : p));
   };
+ 
+  const insertInlineImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+
+    setIsUploading(true);
+    const fileName = `${Date.now()}-inline-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('attachments')
+      .upload(fileName, file);
+
+    if (error) {
+      console.error('Error uploading inline image:', error);
+      setIsUploading(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('attachments')
+      .getPublicUrl(fileName);
+
+    editor.chain().focus().setImage({ src: publicUrl, alt: file.name }).run();
+    setIsUploading(false);
+  };
+
   return (
     <main className="h-screen overflow-hidden flex flex-col transition-colors duration-1000 bg-[#050505] text-zinc-400" spellCheck="false">
       <style dangerouslySetInnerHTML={{ __html: editorStyles }} />
@@ -393,7 +434,14 @@ export default function DiversosPage() {
             <>
             <div className="flex-1 flex overflow-hidden">
               {/* Left Gutter for Annotations */}
-              <div className="w-48 lg:w-56 flex-shrink-0 border-r border-white/5 relative p-6">
+              <div 
+                className="w-48 lg:w-56 flex-shrink-0 border-r border-white/5 relative p-6 bg-black/10"
+                onMouseEnter={() => setIsGutterHovered(true)}
+                onMouseLeave={() => {
+                  setIsGutterHovered(false);
+                  setHoveredHighlightId(null);
+                }}
+              >
                 <AnimatePresence>
                   {hoveredHighlightId && activePage.highlights.find(h => h.id === hoveredHighlightId) && (
                     <motion.div
@@ -447,10 +495,14 @@ export default function DiversosPage() {
                   ) : (
                     <button 
                       onClick={() => setIsAddingAnnotation(true)}
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors border-r border-white/5"
                     >
                       <NotePencil size={14} /> Anotar
                     </button>
+                    <label className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 text-zinc-100 text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer">
+                      <ImageSquare size={14} /> Imagem
+                      <input type="file" className="hidden" accept="image/*" onChange={insertInlineImage} disabled={isUploading} />
+                    </label>
                   )}
                 </BubbleMenu>
               )}

@@ -39,17 +39,24 @@ export default function FlashcardsPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     
-    // 1. Verificar total de palavras para o contador
+    // 1. Contar palavras APRENDIDAS (já revisadas com sucesso pelo menos uma vez)
     const { count } = await supabase
       .from('flashcards')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .gt('interval', 0);
     setTotalWords(count || 0);
 
-    // 2. Ingestão Automática (10 novas palavras por dia)
-    const lastIngestion = localStorage.getItem('last_flashcard_ingestion');
-    const today = new Date().toDateString();
+    // 2. Ingestão Inteligente (Sistema de Fila: manter 15 palavras em aprendizado ativo)
+    // Contar quantas palavras ATIVAS (com intervalo curto < 7 dias) no baralho
+    const { count: activeLearningCount } = await supabase
+      .from('flashcards')
+      .select('*', { count: 'exact', head: true })
+      .lt('interval', 7);
+    
+    const TARGET_ACTIVE_CARDS = 15;
+    const needNewCards = TARGET_ACTIVE_CARDS - (activeLearningCount || 0);
 
-    if (lastIngestion !== today) {
+    if (needNewCards > 0) {
       // Buscar IDs que o usuário já tem para não duplicar
       const { data: existing } = await supabase.from('flashcards').select('front');
       const existingFronts = new Set(existing?.map(e => e.front) || []);
@@ -58,7 +65,7 @@ export default function FlashcardsPage() {
       const pool = ITALIAN_WORDS.filter(w => 
         w.level === (isAdvancedArea ? 'avancado' : 'basico') && 
         !existingFronts.has(w.front)
-      ).slice(0, 10);
+      ).slice(0, needNewCards);
 
       if (pool.length > 0) {
         const newCards = pool.map(p => ({
@@ -70,13 +77,6 @@ export default function FlashcardsPage() {
           ease_factor: 2.5
         }));
         await supabase.from('flashcards').insert(newCards);
-        localStorage.setItem('last_flashcard_ingestion', today);
-        
-        // Atualizar total após inserção
-        const { count: newCount } = await supabase
-          .from('flashcards')
-          .select('*', { count: 'exact', head: true });
-        setTotalWords(newCount || 0);
       }
     }
 
@@ -177,7 +177,7 @@ export default function FlashcardsPage() {
                   Nível {isAdvancedArea ? 'Básico Avançado' : 'Básico'}
                 </span>
                 <span className="text-[9px] font-mono text-zinc-500 tracking-tighter">
-                  {totalWords} / {currentGoal} Palavras
+                  {totalWords} Aprendidas / {currentGoal} Objetivo
                 </span>
              </div>
           </div>
