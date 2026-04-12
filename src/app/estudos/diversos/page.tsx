@@ -129,6 +129,7 @@ export default function DiversosPage() {
       },
       attributes: {
         class: 'prose prose-invert max-w-none focus:outline-none min-h-[500px] text-zinc-100 text-lg leading-relaxed font-sans',
+        spellCheck: 'false',
       },
     },
   });
@@ -355,7 +356,7 @@ export default function DiversosPage() {
     setPages(prev => prev.map(p => p.id === activePageId ? { ...p, links: updatedLinks } : p));
   };
   return (
-    <main className="h-screen overflow-hidden flex flex-col transition-colors duration-1000 bg-[#050505] text-zinc-400">
+    <main className="h-screen overflow-hidden flex flex-col transition-colors duration-1000 bg-[#050505] text-zinc-400" spellCheck="false">
       <style dangerouslySetInnerHTML={{ __html: editorStyles }} />
       {/* Header Clássico */}
       <div className="p-6 md:px-12 flex-shrink-0 flex items-center justify-between border-b border-white/5 transition-colors duration-1000 relative z-20 bg-black/40 backdrop-blur-xl">
@@ -392,7 +393,7 @@ export default function DiversosPage() {
             <>
             <div className="flex-1 flex overflow-hidden">
               {/* Left Gutter for Annotations */}
-              <div className="w-64 flex-shrink-0 border-r border-white/5 relative p-8">
+              <div className="w-48 lg:w-56 flex-shrink-0 border-r border-white/5 relative p-6">
                 <AnimatePresence>
                   {hoveredHighlightId && activePage.highlights.find(h => h.id === hoveredHighlightId) && (
                     <motion.div
@@ -401,16 +402,22 @@ export default function DiversosPage() {
                       exit={{ opacity: 0, x: -20 }}
                       className="sticky top-12"
                     >
-                      <div className="flex items-center gap-2 mb-4 text-zinc-500">
-                        <NotePencil size={16} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Anotação</span>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2 text-zinc-500">
+                          <NotePencil size={16} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Anotação</span>
+                        </div>
+                        <button 
+                          onClick={() => deleteHighlight(hoveredHighlightId)}
+                          className="p-1.5 hover:bg-red-500/10 text-red-400/50 hover:text-red-400 rounded-lg transition-all"
+                          title="Remover anotação"
+                        >
+                          <Trash size={14} />
+                        </button>
                       </div>
-                      <p className="text-zinc-100 text-sm font-medium leading-relaxed italic border-l-2 border-yellow-500/50 pl-4 py-1">
+                      <p className="text-zinc-100 text-sm font-medium leading-relaxed italic border-l-2 border-yellow-500/50 pl-4 py-1 break-words">
                         {activePage.highlights.find(h => h.id === hoveredHighlightId)?.note}
                       </p>
-                      <span className="block mt-4 text-[8px] font-mono text-zinc-600 uppercase tracking-tighter">
-                        {new Date(activePage.highlights.find(h => h.id === hoveredHighlightId)?.createdAt || '').toLocaleDateString()}
-                      </span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -521,7 +528,7 @@ export default function DiversosPage() {
                  >
                    {/* Page Header */}
                    <div 
-                     onClick={() => setActivePageId(page.id)}
+                     onClick={() => setActivePageId(prev => prev === page.id ? null : page.id)}
                      className="flex items-center justify-between p-4 cursor-pointer"
                    >
                      <div className="flex items-center gap-3 overflow-hidden">
