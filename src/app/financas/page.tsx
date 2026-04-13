@@ -44,8 +44,17 @@ export default function FinancePage() {
   ]);
   const [expenseName, setExpenseName] = useState('');
   const [expenseValue, setExpenseValue] = useState('');
-  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
 
+  // Helper to standardise dates locally completely avoiding timezone shifts
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    // Normalize both full ISO and simple YYYY-MM-DD strings
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length !== 3) return new Date();
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  };
+
+  const [expenseDate, setExpenseDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   // -- UI State --
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -90,12 +99,12 @@ export default function FinancePage() {
       id: Math.random().toString(36).substr(2, 9),
       label: expenseName,
       value: parseFloat(expenseValue),
-      date: new Date(expenseDate).toISOString()
+      date: expenseDate // Keep as pure YYYY-MM-DD string
     };
     setExpenses([...expenses, newExpense]);
     setExpenseName('');
     setExpenseValue('');
-    setExpenseDate(new Date().toISOString().split('T')[0]);
+    setExpenseDate(format(new Date(), 'yyyy-MM-dd'));
   };
 
   const removeExpense = (id: string) => {
@@ -240,7 +249,7 @@ export default function FinancePage() {
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-white/80">{exp.label}</span>
                     <span className="text-[10px] font-black uppercase text-white/20">
-                      {exp.date ? format(new Date(exp.date), 'dd MMM', { locale: ptBR }) : 'S/ Data'}
+                      {exp.date ? format(parseLocalDate(exp.date), 'dd MMM', { locale: ptBR }) : 'S/ Data'}
                     </span>
                   </div>
                 </div>
