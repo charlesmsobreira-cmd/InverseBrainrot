@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, PlusCircle, Trash, Wallet, ChartPieSlice, CurrencyCircleDollar, TrendUp, Vault, Plus } from '@phosphor-icons/react';
+import { ArrowLeft, PlusCircle, Trash, Wallet, ChartPieSlice, CurrencyCircleDollar, TrendUp, Vault, Plus, PencilSimple } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -25,6 +25,7 @@ export default function PortfolioPage() {
   const [assetValue, setAssetValue] = useState('');
   const [assetCategory, setAssetCategory] = useState<Asset['category']>('Equities');
   const [isAdding, setIsAdding] = useState(false);
+  const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -41,18 +42,45 @@ export default function PortfolioPage() {
     }
   }, [assets, isLoaded]);
 
-  const addAsset = () => {
+  const saveAsset = () => {
     if (!assetName || !assetValue) return;
-    const newItem: Asset = {
-      id: Math.random().toString(36).substr(2, 9),
-      label: assetName,
-      value: parseFloat(assetValue),
-      category: assetCategory
-    };
-    setAssets([newItem, ...assets]);
+    
+    if (editingAssetId) {
+      setAssets(assets.map(a => a.id === editingAssetId ? {
+        ...a,
+        label: assetName,
+        value: parseFloat(assetValue.toString()),
+        category: assetCategory
+      } : a));
+    } else {
+      const newItem: Asset = {
+        id: Math.random().toString(36).substr(2, 9),
+        label: assetName,
+        value: parseFloat(assetValue.toString()),
+        category: assetCategory
+      };
+      setAssets([newItem, ...assets]);
+    }
+    
     setAssetName('');
     setAssetValue('');
-    setIsAdding(false); // Close after adding
+    setEditingAssetId(null);
+    setIsAdding(false);
+  };
+
+  const startEdit = (asset: Asset) => {
+    setAssetName(asset.label);
+    setAssetValue(asset.value.toString());
+    setAssetCategory(asset.category);
+    setEditingAssetId(asset.id);
+    setIsAdding(true);
+  };
+
+  const cancelAdd = () => {
+    setAssetName('');
+    setAssetValue('');
+    setEditingAssetId(null);
+    setIsAdding(false);
   };
 
   const removeAsset = (id: string) => {
@@ -107,11 +135,11 @@ export default function PortfolioPage() {
         {/* Add Asset Form */}
         <section className="mb-24">
           <button 
-            onClick={() => setIsAdding(!isAdding)}
+            onClick={() => isAdding ? cancelAdd() : setIsAdding(true)}
             className="w-full flex items-center justify-between group"
           >
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/20 group-hover:text-white transition-all flex items-center gap-3">
-               <Plus size={14} weight="bold" className={`transition-transform duration-500 ${isAdding ? 'rotate-45' : ''}`} /> Adicionar Ativo
+               <Plus size={14} weight="bold" className={`transition-transform duration-500 ${isAdding ? 'rotate-45' : ''}`} /> {editingAssetId ? 'Editar Ativo' : 'Adicionar Ativo'}
             </h2>
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/10 group-hover:text-white/40 transition-all">
               {isAdding ? 'cancelar' : 'expandir'}
@@ -158,10 +186,10 @@ export default function PortfolioPage() {
                   </div>
 
                   <button 
-                    onClick={addAsset}
+                    onClick={saveAsset}
                     className="w-full py-6 bg-white text-black rounded-2xl font-black uppercase tracking-[0.4em] text-[11px] hover:bg-zinc-200 transition-all shadow-xl shadow-white/5"
                   >
-                    Registrar Ativo
+                    {editingAssetId ? 'Salvar Alterações' : 'Registrar Ativo'}
                   </button>
                 </div>
               </motion.div>
@@ -200,12 +228,20 @@ export default function PortfolioPage() {
                     <span className="text-2xl font-black font-mono text-white">
                       {asset.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </span>
-                    <button 
-                      onClick={() => removeAsset(asset.id)}
-                      className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-white/20 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                    >
-                      <Trash size={18} />
-                    </button>
+                    <div className="flex gap-2">
+                        <button 
+                          onClick={() => startEdit(asset)}
+                          className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-white/20 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          <PencilSimple size={18} />
+                        </button>
+                        <button 
+                          onClick={() => removeAsset(asset.id)}
+                          className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-white/20 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                        >
+                          <Trash size={18} />
+                        </button>
+                    </div>
                   </div>
                 </motion.div>
               );
