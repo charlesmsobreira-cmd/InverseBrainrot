@@ -238,7 +238,11 @@ export default function FinancePage() {
 
           {/* Scrolling Expense List */}
           <div className="flex-1 overflow-y-auto pr-4 space-y-3 custom-scrollbar">
-            {expenses.map(exp => (
+            {[...expenses].sort((a, b) => {
+              const tA = a.date ? parseLocalDate(a.date).getTime() : 0;
+              const tB = b.date ? parseLocalDate(b.date).getTime() : 0;
+              return tB - tA;
+            }).map(exp => (
               <motion.div 
                 layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                 key={exp.id} 
