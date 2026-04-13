@@ -10,6 +10,9 @@ import {
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import DatePicker from '@/components/DatePicker';
 
 // --- Quotes Database (Used for Header) ---
 const financeQuotes = [
@@ -34,13 +37,14 @@ export default function FinancePage() {
   const [patrimonio, setPatrimonio] = useState(0);
   const [limit, setLimit] = useState(5000.00);
   
-  const [expenses, setExpenses] = useState<{id: string, label: string, value: number}[]>([
-    { id: '1', label: 'Assinatura Adobe', value: 120.00 },
-    { id: '2', label: 'Almoço Executivo', value: 65.00 },
-    { id: '3', label: 'Host & Vercel', value: 45.00 },
+  const [expenses, setExpenses] = useState<{id: string, label: string, value: number, date: string}[]>([
+    { id: '1', label: 'Assinatura Adobe', value: 120.00, date: new Date().toISOString() },
+    { id: '2', label: 'Almoço Executivo', value: 65.00, date: new Date().toISOString() },
+    { id: '3', label: 'Host & Vercel', value: 45.00, date: new Date().toISOString() },
   ]);
   const [expenseName, setExpenseName] = useState('');
   const [expenseValue, setExpenseValue] = useState('');
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
 
   // -- UI State --
   const [isEditing, setIsEditing] = useState(false);
@@ -81,15 +85,17 @@ export default function FinancePage() {
   }, [patrimonio, limit, expenses]);
 
   const addExpense = () => {
-    if (!expenseName || !expenseValue) return;
+    if (!expenseName || !expenseValue || !expenseDate) return;
     const newExpense = {
       id: Math.random().toString(36).substr(2, 9),
       label: expenseName,
-      value: parseFloat(expenseValue)
+      value: parseFloat(expenseValue),
+      date: new Date(expenseDate).toISOString()
     };
     setExpenses([...expenses, newExpense]);
     setExpenseName('');
     setExpenseValue('');
+    setExpenseDate(new Date().toISOString().split('T')[0]);
   };
 
   const removeExpense = (id: string) => {
@@ -204,6 +210,11 @@ export default function FinancePage() {
               placeholder="Nome" value={expenseName} onChange={e => setExpenseName(e.target.value)}
               className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm outline-none focus:border-white/30 transition-all font-bold"
             />
+            <DatePicker 
+              value={expenseDate} 
+              onChange={setExpenseDate} 
+              className="w-48"
+            />
             <input 
               type="number" placeholder="R$ 0,00" value={expenseValue} onChange={e => setExpenseValue(e.target.value)}
               className="w-32 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm outline-none focus:border-white/30 transition-all font-mono font-bold"
@@ -226,7 +237,12 @@ export default function FinancePage() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-2 h-2 rounded-full bg-white/20 group-hover:bg-white transition-colors" />
-                  <span className="text-sm font-bold text-white/80">{exp.label}</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-white/80">{exp.label}</span>
+                    <span className="text-[10px] font-black uppercase text-white/20">
+                      {exp.date ? format(new Date(exp.date), 'dd MMM', { locale: ptBR }) : 'S/ Data'}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-6">
                   <span className="font-mono text-sm font-black text-white">
