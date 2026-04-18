@@ -242,7 +242,12 @@ export function HighlightsCarousel() {
                   
                   <p className="text-[13px] md:text-sm font-mono italic text-black/40 leading-relaxed mb-4 max-w-[90%]">
                     {item.subtitle 
-                      ? `${item.category === 'Livro' ? 'Lido' : item.category === 'Filme' ? 'Assistido' : 'Ouvida'} em ${item.date || 'Recente'}`
+                      ? (() => {
+                          const isBook = item.category === 'Livro';
+                          const isCompleted = item.description?.includes('(Lido)');
+                          const label = isBook ? (isCompleted ? 'Lido' : 'Lendo') : (item.category === 'Filme' ? 'Assistido' : 'Ouvida');
+                          return `${label} em ${item.date || 'Recente'}`;
+                        })()
                       : item.description // Fallback for old items
                     }
                   </p>

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, Star, StarHalf, Heart, CheckCircle, WarningCircle, ListBullets, Trash, PlusCircle } from '@phosphor-icons/react';
+import { ArrowLeft, X, Star, StarHalf, Heart, CheckCircle, WarningCircle, ListBullets, Trash, PlusCircle, Pencil } from '@phosphor-icons/react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -17,6 +17,7 @@ interface LogItem {
   date?: string;
   rating?: number;
   isLiked?: boolean;
+  isCompleted?: boolean;
 }
 
 interface ToastProps {
@@ -31,12 +32,14 @@ interface FavoriteListProps {
   textColor: string;
   isDeleteMode: boolean;
   onDelete: (id: string) => void;
+  onEdit: (log: LogItem) => void;
 }
 
 interface LogModalProps {
   isOpen: boolean;
   onClose: () => void;
   category: string | null;
+  editingLog: LogItem | null;
   onNotify: (msg: string, type?: 'success' | 'error') => void;
   onRefresh: () => void;
 }
@@ -75,7 +78,7 @@ const Toast = ({ message, type, onClose }: ToastProps) => (
 );
 
 // --- Sub-componente: Lista de Favoritos/Wishlist ---
-const FavoriteList = ({ logs, category, textColor, isDeleteMode, onDelete }: FavoriteListProps) => {
+const FavoriteList = ({ logs, category, textColor, isDeleteMode, onDelete, onEdit }: FavoriteListProps) => {
   const mapCategory: Record<string, string> = {
     'Músicas': 'Música',
     'Livros': 'Livro',
@@ -89,61 +92,57 @@ const FavoriteList = ({ logs, category, textColor, isDeleteMode, onDelete }: Fav
 
   if (filtered.length === 0) return null;
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "circOut" } }
-  };
-
   return (
-    <motion.ul 
-      variants={container as any}
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true }}
-      className="flex flex-col items-center w-full max-w-sm mb-8"
-    >
-      {filtered.map((log) => (
-        <motion.li
-          key={log.id}
-          variants={item as any}
-          className={`w-full py-2.5 border-b text-center text-sm md:text-base font-bold tracking-tight last:border-0 relative group ${
-            textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'
-          }`}
-        >
-          <span className="relative z-10">{log.title}</span>
-          
-          <AnimatePresence>
-            {isDeleteMode && (
-              <motion.button
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                onClick={() => onDelete(log.id)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-red-500 hover:scale-110 transition-transform"
-              >
-                <Trash size={18} weight="bold" />
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </motion.li>
-      ))}
-    </motion.ul>
+    <ul className="flex flex-col items-center w-full max-w-sm mb-8">
+      <AnimatePresence mode="popLayout">
+        {filtered.map((log, index) => (
+          <motion.li
+            key={log.id}
+            layout
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.4, ease: "circOut", delay: index * 0.05 } }}
+            exit={{ opacity: 0, y: 10, transition: { duration: 0.2 } }}
+            className={`w-full py-2.5 border-b text-center text-sm md:text-base font-bold tracking-tight last:border-0 relative group ${
+              textColor === 'text-white' ? 'border-white/10 text-white' : 'border-black/5 text-black'
+            }`}
+          >
+            <span className="relative z-10">{log.title}</span>
+            
+            <AnimatePresence>
+              {isDeleteMode && (
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex gap-1">
+                  {category === 'Livros' && (
+                    <motion.button
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      onClick={() => onEdit(log)}
+                      className="p-2 text-azure-500 hover:scale-110 transition-transform"
+                    >
+                      <Pencil size={18} weight="bold" />
+                    </motion.button>
+                  )}
+                  <motion.button
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    onClick={() => onDelete(log.id)}
+                    className="p-2 text-red-500 hover:scale-110 transition-transform"
+                  >
+                    <Trash size={18} weight="bold" />
+                  </motion.button>
+                </div>
+              )}
+            </AnimatePresence>
+          </motion.li>
+        ))}
+      </AnimatePresence>
+    </ul>
   );
 };
 
 // --- Sub-componente: Modal de Registro ---
-const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalProps) => {
+const LogModal = ({ isOpen, onClose, category, editingLog, onNotify, onRefresh }: LogModalProps) => {
   const [name, setName] = useState('');
   const [extra, setExtra] = useState('');
   const [review, setReview] = useState('');
@@ -151,20 +150,36 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
 
+  // Prepopulate when editing
+  useEffect(() => {
+    if (editingLog) {
+      setName(editingLog.title);
+      setExtra(editingLog.subtitle || '');
+      setImageUrl(editingLog.imageUrl || '');
+      setRating(editingLog.rating || 0);
+      setIsLiked(editingLog.isLiked || false);
+      setIsCompleted(editingLog.description.includes('(Lido)'));
+      
+      // Try to extract review from description
+      const reviewMatch = editingLog.description.match(/"(.*)"/);
+      if (reviewMatch) setReview(reviewMatch[1]);
+    } else {
+      setName(''); setExtra(''); setReview(''); setImageUrl(''); setRating(0); setIsLiked(false); setIsCompleted(false);
+    }
+  }, [editingLog, isOpen]);
+
   const getPreviewUrl = () => {
     if (!imageUrl) return '';
-    // Se for URL externa ou absoluta, retorna direto
     if (imageUrl.startsWith('http') || imageUrl.startsWith('blob:')) return imageUrl;
     
-    // Se for um link do Supabase Storage
     if (imageUrl.includes('supabase.co')) {
       return `${imageUrl}?t=${previewKey}`;
     }
 
-    // Fallback para o sistema legado de arquivos locais
     const filename = imageUrl.endsWith('.png') ? imageUrl : `${imageUrl}.png`;
     return `/logs/${filename}?t=${previewKey}`;
   };
@@ -175,19 +190,16 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
 
     setIsUploading(true);
     try {
-      // 1. Gerar nome único
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `covers/${fileName}`;
 
-      // 2. Upload para o Supabase (Bucket 'mural')
       const { data, error } = await supabase.storage
         .from('mural')
         .upload(filePath, file);
 
       if (error) throw error;
 
-      // 3. Pegar URL Pública
       const { data: { publicUrl } } = supabase.storage
         .from('mural')
         .getPublicUrl(filePath);
@@ -197,7 +209,6 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       onNotify('Imagem carregada com sucesso!');
     } catch (error: any) {
       console.error('Upload error:', error);
-      // Melhora a mensagem de erro para o usuário
       let msg = 'Erro ao carregar imagem no Storage!';
       if (error.message?.includes('bucket not found') || error.status === 404) {
         msg = 'Erro: O bucket "mural" não existe no Supabase!';
@@ -211,57 +222,69 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
   };
 
   const handleSave = async () => {
-    if (!name || !category) {
-      onNotify('Nome da obra é obrigatório!', 'error');
+    if (!name || (!category && !editingLog)) {
+      onNotify('Dados incompletos!', 'error');
       return;
     }
 
-    if (category !== 'Filmes' && !imageUrl) {
+    const activeCategory = category || editingLog?.category || '';
+
+    if (activeCategory !== 'Filmes' && !imageUrl) {
       onNotify('Imagem é obrigatória!', 'error');
       return;
     }
 
     const date = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     const reviewPart = review.trim() ? ` "${review}"` : '';
-    const internalCategory = category.slice(0, -1);
+    const internalCategory = activeCategory.endsWith('s') ? activeCategory.slice(0, -1) : activeCategory;
 
-    const descriptionText = category === 'Músicas' 
-      ? `Em ${date}, ouviu ${name} de ${extra}.${reviewPart}`
-      : category === 'Livros'
-      ? `Em ${date}, leu ${name} de ${extra}.${reviewPart}`
-      : `Na wishlist.`;
+    let descriptionText = '';
+    if (internalCategory === 'Música') {
+      descriptionText = `Em ${date}, ouviu ${name} de ${extra}.${reviewPart}`;
+    } else if (internalCategory === 'Livro') {
+      descriptionText = isCompleted 
+        ? `(Lido) Em ${date}, concluiu a leitura de ${name} de ${extra}.${reviewPart}`
+        : `(Lendo) ${name} de ${extra}.${reviewPart}`;
+    } else {
+      descriptionText = `Na wishlist.`;
+    }
 
-    const newLog = {
-      id: Date.now().toString(), // Re-adicionando ID manual por compatibilidade
+    const logData = {
       title: name,
       description: descriptionText,
       subtitle: extra,
       date: date,
-      image_url: imageUrl, // Salva o link direto (seja local ou Supabase)
+      image_url: imageUrl,
       category: internalCategory,
       rating: Math.round(rating),
       is_liked: isLiked
     };
 
-    const { error } = await supabase.from('highlights').insert([newLog]);
+    let error;
+    if (editingLog) {
+      const { error: err } = await supabase.from('highlights').update(logData).eq('id', editingLog.id);
+      error = err;
+    } else {
+      const { error: err } = await supabase.from('highlights').insert([{ ...logData, id: Date.now().toString() }]);
+      error = err;
+    }
+
     if (error) {
-      console.error('Database insertion error detail:', error);
+      console.error('Database error:', error);
       onNotify(`Erro no banco: ${error.message}`, 'error');
       return;
     }
 
-    if (category !== 'Filmes') {
+    if (activeCategory !== 'Filmes') {
       window.dispatchEvent(new Event('highlightsUpdated'));
     }
     
     onRefresh();
     onClose();
-    onNotify('Log registrado com sucesso!');
-    // Reset state
-    setName(''); setExtra(''); setReview(''); setImageUrl(''); setRating(0); setIsLiked(false);
+    onNotify(editingLog ? 'Log atualizado!' : 'Log registrado com sucesso!');
   };
 
-  if (!isOpen || !category) return null;
+  if (!isOpen || (!category && !editingLog)) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -272,8 +295,8 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
       >
         <div className="flex justify-between items-start mb-8">
           <div className="flex flex-col">
-            <h3 className="text-3xl font-black uppercase tracking-tighter">Novo Registro</h3>
-            <span className="text-[10px] font-bold tracking-widest uppercase opacity-40">{category}</span>
+            <h3 className="text-3xl font-black uppercase tracking-tighter">{editingLog ? 'Editar Registro' : 'Novo Registro'}</h3>
+            <span className="text-[10px] font-bold tracking-widest uppercase opacity-40">{editingLog ? editingLog.category : category}</span>
           </div>
           <button onClick={onClose} className="text-white/20 hover:text-white transition-colors"><X size={24} weight="bold" /></button>
         </div>
@@ -318,6 +341,19 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
                     <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Gostou?</label>
                     <button onClick={() => setIsLiked(!isLiked)} className={`transition-all ${isLiked ? 'text-red-500 scale-110' : 'text-white/20 hover:text-white/40'}`}><Heart size={24} weight={isLiked ? "fill" : "bold"} /></button>
                  </div>
+
+                 {(category === 'Livros' || editingLog?.category === 'Livro') && (
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Leitura Concluída?</label>
+                       <button 
+                         onClick={() => setIsCompleted(!isCompleted)} 
+                         className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white/5 border-white/10 text-white/40'}`}
+                       >
+                         {isCompleted ? <CheckCircle size={20} weight="fill" /> : <div className="w-5 h-5 rounded-full border-2 border-current opacity-20" />}
+                         <span className="text-[10px] font-bold uppercase tracking-widest">{isCompleted ? 'Lido' : 'Lendo'}</span>
+                       </button>
+                    </div>
+                  )}
               </div>
 
               <div className="space-y-2">
@@ -382,7 +418,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
 
           <div className="flex gap-4 pt-4 sticky bottom-0 bg-[#121212] py-2">
             <button onClick={onClose} className="flex-1 py-4 rounded-xl font-bold uppercase tracking-widest text-xs bg-white/5 hover:bg-white/10 transition-all focus:outline-none">Cancelar</button>
-            <button onClick={handleSave} disabled={isUploading} className={`flex-[2] py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-lg focus:outline-none ${isUploading ? 'bg-white/5 text-white/20' : 'bg-azure-500 hover:bg-azure-600 shadow-azure-500/20'}`}>Criar Registro</button>
+            <button onClick={handleSave} disabled={isUploading} className={`flex-[2] py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-lg focus:outline-none ${isUploading ? 'bg-white/5 text-white/20' : 'bg-azure-500 hover:bg-azure-600 shadow-azure-500/20'}`}>{editingLog ? 'Salvar Alterações' : 'Criar Registro'}</button>
           </div>
         </div>
       </motion.div>
@@ -391,7 +427,7 @@ const LogModal = ({ isOpen, onClose, category, onNotify, onRefresh }: LogModalPr
 };
 
 // --- Sub-componente: Seção de Categoria ---
-const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, reverse = false, onOpenModal, isDeleteMode, onDelete }: CategorySectionProps) => (
+const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, reverse = false, onOpenModal, isDeleteMode, onDelete, onEdit }: CategorySectionProps & { onEdit: (log: LogItem) => void }) => (
   <section className={`min-h-screen w-full flex flex-col justify-center relative overflow-hidden ${bgColor} ${textColor} px-6 md:px-24 py-20`}>
     <div className={`max-w-[1400px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center ${reverse ? 'md:flex-row-reverse' : ''}`}>
       <div className="flex flex-col items-center text-center w-full">
@@ -402,7 +438,7 @@ const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, rev
            </div>
            
            <div className="w-full flex flex-col items-center min-h-[260px] justify-center">
-             <FavoriteList logs={logs} category={title} textColor={textColor} isDeleteMode={isDeleteMode} onDelete={onDelete} />
+             <FavoriteList logs={logs} category={title} textColor={textColor} isDeleteMode={isDeleteMode} onDelete={onDelete} onEdit={onEdit} />
            </div>
 
            <motion.button
@@ -426,6 +462,7 @@ const CategorySection = ({ title, subtitle, bgColor, textColor, image, logs, rev
 export default function MuralPage() {
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   const [modalCategory, setModalCategory] = useState<string | null>(null);
+  const [editingLog, setEditingLog] = useState<LogItem | null>(null);
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
@@ -455,6 +492,10 @@ export default function MuralPage() {
     window.dispatchEvent(new Event('highlightsUpdated'));
   };
 
+  const handleEditLog = (log: LogItem) => {
+    setEditingLog(log);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       loadLogs();
@@ -475,9 +516,9 @@ export default function MuralPage() {
         </Link>
       </div>
 
-      <CategorySection title="Músicas" subtitle="Listening Party" bgColor="bg-[#E21B22]" textColor="text-white" image="/mural/music.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} />
-      <CategorySection title="Livros" subtitle="Current Session" bgColor="bg-white" textColor="text-black" image="/mural/books.png" reverse={true} logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} />
-      <CategorySection title="Filmes" subtitle="Wishlist" bgColor="bg-black" textColor="text-white" image="/mural/movies.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} />
+      <CategorySection title="Músicas" subtitle="Listening Party" bgColor="bg-[#E21B22]" textColor="text-white" image="/mural/music.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} onEdit={handleEditLog} />
+      <CategorySection title="Livros" subtitle="Current Session" bgColor="bg-white" textColor="text-black" image="/mural/books.png" reverse={true} logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} onEdit={handleEditLog} />
+      <CategorySection title="Filmes" subtitle="Wishlist" bgColor="bg-black" textColor="text-white" image="/mural/movies.png" logs={logs} onOpenModal={(cat:string) => setModalCategory(cat)} isDeleteMode={isDeleteMode} onDelete={handleDeleteLog} onEdit={handleEditLog} />
 
       <footer className="py-20 bg-black text-white text-center">
         <button 
@@ -488,7 +529,7 @@ export default function MuralPage() {
         </button>
       </footer>
 
-      <LogModal isOpen={!!modalCategory} onClose={() => setModalCategory(null)} category={modalCategory} onNotify={showNotification} onRefresh={loadLogs} />
+      <LogModal isOpen={!!modalCategory || !!editingLog} onClose={() => { setModalCategory(null); setEditingLog(null); }} category={modalCategory} editingLog={editingLog} onNotify={showNotification} onRefresh={loadLogs} />
 
       <AnimatePresence>{notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}</AnimatePresence>
     </main>
