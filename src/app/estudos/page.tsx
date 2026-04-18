@@ -1,58 +1,58 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowLeft } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
 export default function StudyPage() {
   const router = useRouter();
+  const [hovered, setHovered] = useState<'diversos' | 'flashcards' | null>(null);
+
+  // Calcula a largura flexível sem depender da engine do framer motion
+  const getWidth = (section: 'diversos' | 'flashcards') => {
+    if (!hovered) return '50%';
+    return hovered === section ? '65%' : '35%';
+  };
 
   return (
-    <main
-      className="h-screen w-screen overflow-hidden flex relative bg-[#050505] selection:bg-white selection:text-black"
-    >
+    <main className="h-screen w-screen overflow-hidden flex relative bg-[#050505] selection:bg-white selection:text-black">
       {/* Back button */}
       <Link href="/" className="absolute top-10 left-10" style={{ zIndex: 100 }}>
         <motion.button
-          whileHover={{ x: -10 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           className="flex items-center gap-3 px-8 py-4 border border-white/10 rounded-full text-zinc-500 hover:text-white font-black uppercase tracking-[0.3em] text-[10px] transition-all bg-black shadow-2xl backdrop-blur-xl"
         >
           <ArrowLeft size={16} weight="bold" /> Voltar
         </motion.button>
       </Link>
 
-      {/* ── SPLIT SECTIONS ── */}
-      <motion.div 
-        initial="hidden"
-        animate="visible"
-        className="flex-1 flex flex-row h-full w-full"
-      >
+      <div className="flex-1 flex flex-row h-full w-full">
         
         {/* ── SECTION: ESTUDOS DIVERSOS ───────────────────────── */}
         <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          onMouseEnter={() => setHovered('diversos')}
+          onMouseLeave={() => setHovered(null)}
           onClick={() => router.push('/estudos/diversos')}
-          initial={{ x: -50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ 
-            duration: 1.2, 
-            ease: [0.16, 1, 0.3, 1],
-            flex: { duration: 1.5, ease: [0.16, 1, 0.3, 1] }
-          }}
-          whileHover={{ flex: 1.5 }}
-          className="relative flex-1 group cursor-pointer border-r border-white/5 overflow-hidden"
+          style={{ width: getWidth('diversos') }}
+          className="relative flex flex-col justify-center px-12 md:px-24 cursor-pointer border-r border-white/5 overflow-hidden transition-[width] duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group"
         >
-          {/* Subtle bg glow */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
           
-          <div className="h-full w-full flex flex-col justify-center px-12 md:px-24 relative z-10">
+          <div className="relative z-10 w-full min-w-[500px]">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.1, duration: 0.8 }}
               className="flex items-center gap-2 mb-2"
             >
               <div className="w-8 h-[1px] bg-zinc-800 group-hover:w-16 group-hover:bg-white transition-all duration-700" />
-              <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 group-hover:text-white transition-colors">
+              <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 group-hover:text-white transition-colors duration-700">
                 Deep Focus
               </span>
             </motion.div>
@@ -61,7 +61,7 @@ export default function StudyPage() {
               Diversos
             </h2>
 
-            <p className="mt-12 text-sm text-zinc-600 font-medium leading-relaxed max-w-sm group-hover:text-zinc-300 transition-colors">
+            <p className="mt-12 text-sm text-zinc-600 font-medium leading-relaxed max-w-sm group-hover:text-zinc-300 transition-colors duration-700">
               Exploração, cursos e leitura intensiva. <br />O espaço onde o conhecimento se expande.
             </p>
 
@@ -72,36 +72,30 @@ export default function StudyPage() {
                </div>
             </div>
           </div>
-
         </motion.div>
 
         {/* ── SECTION: FLASHCARDS ─────────────────────────────── */}
         <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          onMouseEnter={() => setHovered('flashcards')}
+          onMouseLeave={() => setHovered(null)}
           onClick={() => router.push('/estudos/flashcards')}
-          initial={{ x: 50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ 
-            duration: 1.2, 
-            ease: [0.16, 1, 0.3, 1],
-            x: { delay: 0.1, duration: 1.2 },
-            opacity: { delay: 0.1, duration: 1.2 },
-            flex: { duration: 1.5, ease: [0.16, 1, 0.3, 1] }
-          }}
-          whileHover={{ flex: 1.5 }}
-          className="relative flex-1 group cursor-pointer overflow-hidden"
+          style={{ width: getWidth('flashcards') }}
+          className="relative flex flex-col justify-center px-12 md:px-24 cursor-pointer overflow-hidden transition-[width] duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group"
         >
-          {/* Subtle bg glow */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
 
-          <div className="h-full w-full flex flex-col justify-center px-12 md:px-24 relative z-10">
+          <div className="relative z-10 w-full min-w-[500px]">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
               className="flex items-center gap-2 mb-2"
             >
               <div className="w-8 h-[1px] bg-zinc-800 group-hover:w-16 group-hover:bg-white transition-all duration-700" />
-              <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 group-hover:text-white transition-colors">
+              <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 group-hover:text-white transition-colors duration-700">
                 Active Recall
               </span>
             </motion.div>
@@ -110,7 +104,7 @@ export default function StudyPage() {
               Flashcards
             </h2>
 
-            <p className="mt-12 text-sm text-zinc-600 font-medium leading-relaxed max-w-sm group-hover:text-zinc-300 transition-colors">
+            <p className="mt-12 text-sm text-zinc-600 font-medium leading-relaxed max-w-sm group-hover:text-zinc-300 transition-colors duration-700">
               Repetição espaçada e memorização. <br />Inspirado na metodologia Anki.
             </p>
 
@@ -121,11 +115,9 @@ export default function StudyPage() {
                </div>
             </div>
           </div>
-
         </motion.div>
 
-      </motion.div>
+      </div>
     </main>
   );
 }
-

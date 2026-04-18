@@ -110,7 +110,7 @@ export default function FlashcardsPage() {
       newNextReview = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
     } else if (action === 'dificil') {
       newInterval = Math.max(1, Math.floor(card.interval * 0.5));
-      newNextReview = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hora
+      newNextReview = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
     } else if (action === 'bom') {
       newInterval = card.interval === 0 ? 1 : card.interval * 2;
       newNextReview = new Date(Date.now() + newInterval * 24 * 60 * 60 * 1000);
@@ -129,14 +129,13 @@ export default function FlashcardsPage() {
       })
       .eq('id', card.id);
 
-    setIsFlipped(false);
-    setTimeout(() => {
-      if (currentIndex < deck.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      } else {
-        setSessionFinished(true);
-      }
-    }, 150);
+    // Atualizar estado sem atraso brusco
+    if (currentIndex < deck.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+      setIsFlipped(false);
+    } else {
+      setSessionFinished(true);
+    }
   };
 
   const restart = () => {
@@ -234,14 +233,17 @@ export default function FlashcardsPage() {
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-xl mx-auto perspective-[1000px]">
           
-          <motion.div
-            className="w-full aspect-[4/3] rounded-[3rem] cursor-pointer relative"
-            initial={false}
-            animate={{ rotateY: isFlipped ? 180 : 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 25 }}
-            style={{ transformStyle: "preserve-3d" }}
-            onClick={flipCard}
-          >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              className="w-full aspect-[4/3] rounded-[3rem] cursor-pointer relative"
+              initial={{ opacity: 0, x: 20, scale: 0.95, rotateY: 0 }}
+              animate={{ opacity: 1, x: 0, scale: 1, rotateY: isFlipped ? 180 : 0 }}
+              exit={{ opacity: 0, x: -20, scale: 0.95, rotateY: 180 }}
+              transition={{ type: "spring", stiffness: 260, damping: 25 }}
+              style={{ transformStyle: "preserve-3d" }}
+              onClick={flipCard}
+            >
             {/* Front of Card */}
             <div 
               className="absolute inset-0 bg-[#0D0D0D] shadow-2xl border border-white/5 rounded-[3rem] flex flex-col items-center justify-center p-12 text-center"
@@ -272,6 +274,7 @@ export default function FlashcardsPage() {
               </h2>
             </div>
           </motion.div>
+          </AnimatePresence>
 
           {/* Action Buttons */}
           <div className="h-24 w-full mt-10">
