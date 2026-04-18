@@ -367,7 +367,6 @@ export default function FinancePage() {
               <div className="flex flex-col mb-6">
                  <h2 className="text-5xl md:text-[8rem] font-black uppercase tracking-tighter text-white leading-none">Minha<br/>Carteira</h2>
               </div>
-              <p className="text-xl text-white/30 leading-relaxed max-w-2xl mb-12 font-light">A alocação algorítmica de ativos premium para otimização de risco-retorno sistêmico em horizontes de longo prazo.</p>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
                 {processedCategories.map((item, idx) => (
