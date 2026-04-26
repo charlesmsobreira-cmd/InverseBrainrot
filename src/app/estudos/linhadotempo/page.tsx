@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, X } from '@phosphor-icons/react';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 
 import { useRouter } from 'next/navigation';
 
@@ -11,12 +12,13 @@ interface TimelineEvent {
   id: string;
   title: string;
   date: string;
+  type?: 'grand' | 'simple';
 }
 
 export default function LinhaDoTempo() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', date: '' });
+  const [newEvent, setNewEvent] = useState<{ title: string, date: string, type: 'grand' | 'simple' }>({ title: '', date: '', type: 'grand' });
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
@@ -34,27 +36,58 @@ export default function LinhaDoTempo() {
     }
   }, [events, isClient]);
 
+  const extractYear = (dateStr: string) => {
+    const match = dateStr.match(/\b\d{4}\b/);
+    return match ? match[0] : null;
+  };
+
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEvent.title || !newEvent.date) return;
+
+    // Validate Grandioso events in the same year
+    if (newEvent.type === 'grand') {
+      const year = extractYear(newEvent.date);
+      if (year) {
+        const hasGrandInYear = events.some(ev => ev.type === 'grand' && extractYear(ev.date) === year);
+        if (hasGrandInYear) {
+          alert('Já existe um evento grandioso neste ano. Por favor, adicione como um evento simples ou mude o ano.');
+          return;
+        }
+      }
+    }
 
     const newEv: TimelineEvent = {
       id: crypto.randomUUID(),
       title: newEvent.title,
       date: newEvent.date,
+      type: newEvent.type,
     };
 
     // Sort by date (assuming YYYY ou YYYY-MM-DD form)
     const updatedEvents = [...events, newEv].sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
+      const yearA = extractYear(a.date) || a.date;
+      const yearB = extractYear(b.date) || b.date;
+      // Basic sorting by extracted year, or full string fallback
+      return new Date(yearA).getTime() - new Date(yearB).getTime();
     });
 
     setEvents(updatedEvents);
-    setNewEvent({ title: '', date: '' });
+    setNewEvent({ title: '', date: '', type: 'grand' });
     setIsModalOpen(false);
   };
 
   if (!isClient) return null;
+
+  // Group events by date
+  const groupedEvents: { date: string, items: TimelineEvent[] }[] = [];
+  events.forEach(ev => {
+    if (groupedEvents.length > 0 && groupedEvents[groupedEvents.length - 1].date === ev.date) {
+      groupedEvents[groupedEvents.length - 1].items.push(ev);
+    } else {
+      groupedEvents.push({ date: ev.date, items: [ev] });
+    }
+  });
 
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-white selection:text-black overflow-x-hidden relative pb-32">
@@ -113,37 +146,54 @@ export default function LinhaDoTempo() {
         <div className="absolute left-[20px] md:left-1/2 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-white/20 to-transparent -translate-x-1/2" />
 
         <div className="flex flex-col gap-12 md:gap-24 relative z-10 py-12">
-          {events.length === 0 ? (
+          {groupedEvents.length === 0 ? (
             <div className="text-center text-zinc-600 font-medium tracking-wide mt-20">
               Nenhum evento registrado. Adicione o primeiro marco histórico.
             </div>
           ) : (
-            events.map((ev, idx) => {
+            groupedEvents.map((group, idx) => {
               const isEven = idx % 2 === 0;
+              // Group is simple if ALL items in it are simple, else it's grand
+              const isSimpleGroup = group.items.every(ev => ev.type === 'simple');
+
               return (
                 <motion.div 
-                  key={ev.id}
+                  key={group.date + idx}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.6 }}
-                  onClick={() => router.push(`/estudos/linhadotempo/${ev.id}`)}
-                  className={`flex flex-col md:flex-row items-start md:items-center w-full ${isEven ? 'md:justify-start' : 'md:justify-end'} relative group pl-12 md:pl-0 cursor-pointer`}
+                  className={`flex flex-col md:flex-row items-start md:items-center w-full ${isEven ? 'md:justify-start' : 'md:justify-end'} relative pl-12 md:pl-0 ${isSimpleGroup ? 'opacity-80 hover:opacity-100' : ''}`}
                 >
                   
                   {/* Timeline Dot */}
-                  <div className="absolute left-[-2px] md:left-1/2 top-0 md:top-1/2 w-4 h-4 bg-black border-[3px] border-zinc-700 rounded-full md:-translate-x-1/2 md:-translate-y-1/2 group-hover:border-white transition-colors duration-500 z-20" />
-                  <div className="absolute left-[-2px] md:left-1/2 top-0 md:top-1/2 w-4 h-4 bg-white rounded-full md:-translate-x-1/2 md:-translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:scale-[2] transition-all duration-700 blur-sm z-10" />
+                  <div className={`absolute left-[-2px] md:left-1/2 top-0 md:top-1/2 bg-black border-[3px] rounded-full md:-translate-x-1/2 md:-translate-y-1/2 transition-colors duration-500 z-20 ${isSimpleGroup ? 'w-2 h-2 border-zinc-800' : 'w-4 h-4 border-zinc-700'}`} />
+                  
+                  {!isSimpleGroup && (
+                    <div className="absolute left-[-2px] md:left-1/2 top-0 md:top-1/2 w-4 h-4 bg-white rounded-full md:-translate-x-1/2 md:-translate-y-1/2 opacity-0 hover:opacity-100 hover:scale-[2] transition-all duration-700 blur-sm z-10" />
+                  )}
 
-                  {/* Content Box */}
-                  <div className={`w-full md:w-[45%] flex flex-col ${isEven ? 'md:items-end md:text-right' : 'md:items-start md:text-left'} relative group-hover:scale-[1.02] transition-transform duration-500`}>
+                  {/* Content Box (Grouped Events) */}
+                  <div className={`w-full md:w-[45%] flex flex-col ${isEven ? 'md:items-end md:text-right' : 'md:items-start md:text-left'} relative`}>
                     
-                    <span className="text-sm font-black text-zinc-500 tracking-[0.2em] mb-2 font-mono group-hover:text-zinc-300 transition-colors">
-                      {ev.date}
+                    <span className={`font-black tracking-[0.2em] mb-4 font-mono transition-colors ${isSimpleGroup ? 'text-[10px] text-zinc-600' : 'text-sm text-zinc-500'}`}>
+                      {group.date}
                     </span>
-                    <h3 className="text-2xl md:text-4xl font-bold tracking-tight text-white mb-4">
-                      {ev.title}
-                    </h3>
+                    
+                    <div className={`flex flex-col gap-4 ${isEven ? 'items-end' : 'items-start'}`}>
+                      {group.items.map(ev => (
+                        <div 
+                          key={ev.id} 
+                          onClick={() => router.push(`/estudos/linhadotempo/${ev.id}`)}
+                          className="group cursor-pointer hover:scale-[1.02] transition-transform duration-500"
+                        >
+                          <h3 className={`font-bold tracking-tight transition-colors ${ev.type === 'simple' ? 'text-lg md:text-xl text-zinc-500 group-hover:text-zinc-300' : 'text-2xl md:text-4xl text-white'}`}>
+                            {ev.title}
+                          </h3>
+                        </div>
+                      ))}
+                    </div>
+
                   </div>
 
                 </motion.div>
@@ -153,70 +203,91 @@ export default function LinhaDoTempo() {
         </div>
       </div>
 
-      {/* ADD EVENT MODAL */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-              onClick={() => setIsModalOpen(false)}
-            />
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 shadow-2xl"
-            >
-              <button 
+      {/* ADD EVENT MODAL via Portal */}
+      {createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+              />
+              
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 shadow-2xl"
               >
-                <X size={24} />
-              </button>
-
-              <h2 className="text-2xl font-bold text-white mb-8">Novo Marco Histórico</h2>
-
-              <form onSubmit={handleAddEvent} className="flex flex-col gap-6">
-                
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Título do Evento</label>
-                  <input 
-                    type="text" 
-                    value={newEvent.title}
-                    onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
-                    placeholder="Ex: Revolução Francesa"
-                    className="bg-transparent border-b border-zinc-800 pb-2 text-white placeholder-zinc-700 outline-none focus:border-white transition-colors font-medium text-lg"
-                    required
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Data ou Período</label>
-                  <input 
-                    type="text" 
-                    value={newEvent.date}
-                    onChange={(e) => setNewEvent({...newEvent, date: e.target.value})}
-                    placeholder="Ex: 1789 ou 14 de Julho de 1789"
-                    className="bg-transparent border-b border-zinc-800 pb-2 text-white placeholder-zinc-700 outline-none focus:border-white transition-colors font-medium text-lg font-mono"
-                    required
-                  />
-                </div>
-
                 <button 
-                  type="submit"
-                  className="mt-4 w-full py-4 bg-white text-black rounded-lg font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-colors"
+                  onClick={() => setIsModalOpen(false)}
+                  className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
                 >
-                  Salvar Evento
+                  <X size={24} />
                 </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                <h2 className="text-2xl font-bold text-white mb-8">Novo Marco Histórico</h2>
+
+                <form onSubmit={handleAddEvent} className="flex flex-col gap-6">
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Tipo de Evento</label>
+                    <div className="flex gap-4 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewEvent({...newEvent, type: 'grand'})}
+                        className={`flex-1 py-3 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all ${newEvent.type === 'grand' ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-zinc-800 hover:border-zinc-600'}`}
+                      >
+                        Grandioso
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewEvent({...newEvent, type: 'simple'})}
+                        className={`flex-1 py-3 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all ${newEvent.type === 'simple' ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-zinc-800 hover:border-zinc-600'}`}
+                      >
+                        Simples
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 mt-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Título do Evento</label>
+                    <input 
+                      type="text" 
+                      value={newEvent.title}
+                      onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                      className={`bg-transparent border-b border-zinc-800 pb-2 text-white outline-none focus:border-white transition-colors font-medium ${newEvent.type === 'grand' ? 'text-lg' : 'text-base'}`}
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Data ou Período</label>
+                    <input 
+                      type="text" 
+                      value={newEvent.date}
+                      onChange={(e) => setNewEvent({...newEvent, date: e.target.value})}
+                      className="bg-transparent border-b border-zinc-800 pb-2 text-white outline-none focus:border-white transition-colors font-medium text-lg font-mono"
+                      required
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="mt-6 w-full py-4 bg-white text-black rounded-lg font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-colors"
+                  >
+                    Salvar Evento
+                  </button>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
     </main>
   );

@@ -11,6 +11,7 @@ interface TimelineEvent {
   title: string;
   date: string;
   content?: string;
+  type?: 'grand' | 'simple';
 }
 
 export default function EventDetailsPage() {
