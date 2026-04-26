@@ -34,6 +34,15 @@
     @apply antialiased min-h-[100dvh] overflow-x-hidden selection:bg-azure-500 selection:text-white;
   }
 
+  /* Global scrollbar hiding */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
   button, a {
     cursor: pointer;
   }
