@@ -55,6 +55,7 @@ export default function FinancePage() {
   };
 
   const [expenseDate, setExpenseDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [viewingMonth, setViewingMonth] = useState(format(new Date(), 'yyyy-MM'));
   // -- UI State --
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -131,7 +132,8 @@ export default function FinancePage() {
   }
 
   // --- Calculations ---
-  const spent = expenses.reduce((acc, curr) => acc + curr.value, 0);
+  const filteredExpenses = expenses.filter(exp => exp.date && exp.date.startsWith(viewingMonth));
+  const spent = filteredExpenses.reduce((acc, curr) => acc + curr.value, 0);
   const spentPercentage = Math.min((spent / (limit || 1)) * 100, 100);
   
   // Portfolio Calculations
@@ -238,7 +240,7 @@ export default function FinancePage() {
 
           {/* Scrolling Expense List */}
           <div className="flex-1 overflow-y-auto pr-4 space-y-3 custom-scrollbar">
-            {[...expenses].sort((a, b) => {
+            {[...filteredExpenses].sort((a, b) => {
               const tA = a.date ? parseLocalDate(a.date).getTime() : 0;
               const tB = b.date ? parseLocalDate(b.date).getTime() : 0;
               return tB - tA;
@@ -267,7 +269,7 @@ export default function FinancePage() {
                 </div>
               </motion.div>
             ))}
-            {expenses.length === 0 && (
+            {filteredExpenses.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-white/20">
                 <Receipt size={48} weight="thin" className="mb-4" />
                 <p className="text-xs uppercase font-black tracking-[0.3em]">Nenhum gasto catalogado</p>
@@ -346,10 +348,30 @@ export default function FinancePage() {
               </div>
             </div>
 
-            <div className="flex justify-center items-center pt-6 border-t border-white/5">
-              <span className="text-[12px] font-black uppercase tracking-[0.6em] text-white/80">
-                {new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())}
+            <div className="flex justify-between items-center pt-6 border-t border-white/5">
+              <button 
+                onClick={() => {
+                  const [y, m] = viewingMonth.split('-');
+                  const prev = new Date(parseInt(y, 10), parseInt(m, 10) - 2, 1);
+                  setViewingMonth(format(prev, 'yyyy-MM'));
+                }}
+                className="p-2 opacity-30 hover:opacity-100 transition-opacity text-white"
+              >
+                <ArrowLeft size={16} weight="bold" />
+              </button>
+              <span className="text-[12px] font-black uppercase tracking-[0.4em] text-white/80">
+                {format(parseLocalDate(viewingMonth + '-01'), 'MMMM yyyy', { locale: ptBR })}
               </span>
+              <button 
+                onClick={() => {
+                  const [y, m] = viewingMonth.split('-');
+                  const next = new Date(parseInt(y, 10), parseInt(m, 10), 1);
+                  setViewingMonth(format(next, 'yyyy-MM'));
+                }}
+                className="p-2 opacity-30 hover:opacity-100 transition-opacity text-white"
+              >
+                <ArrowRight size={16} weight="bold" />
+              </button>
             </div>
           </div>
         </motion.div>
